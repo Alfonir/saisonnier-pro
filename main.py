@@ -177,26 +177,26 @@ def health():
 
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request, user: Optional[User] = Depends(current_user)):
-content = """
-<div class="grid md:grid-cols-2 gap-4" style="align-items:stretch">
-  <!-- Carte gauche -->
-  <div class="card" style="display:flex; flex-direction:column; height:100%">
-    <h1 class="text-2xl font-semibold mb-2">Centralisez vos réservations.</h1>
-    <p class="text-gray-600">Import iCal, calendrier consolidé, et planning ménage.</p>
-    <div style="margin-top:auto; padding-top:1rem">
-      <a href="/signup" class="btn-gold btn inline-block">Créer un compte</a>
-    </div>
-  </div>
+    content = """
+    <div class="grid md:grid-cols-2 gap-4" style="align-items:stretch">
+      <!-- Carte gauche -->
+      <div class="card" style="display:flex; flex-direction:column; height:100%">
+        <h1 class="text-2xl font-semibold mb-2">Centralisez vos réservations.</h1>
+        <p class="text-gray-600">Import iCal, calendrier consolidé, et planning ménage.</p>
+        <div style="margin-top:auto; padding-top:1rem">
+          <a href="/signup" class="btn-gold btn inline-block">Créer un compte</a>
+        </div>
+      </div>
 
-  <!-- Carte droite -->
-  <div class="card" style="display:flex; flex-direction:column; height:100%">
-    <div class="text-gray-600">Déjà un compte ?</div>
-    <div style="margin-top:auto; padding-top:1rem">
-      <a href="/login" class="btn inline-block">Se connecter</a>
+      <!-- Carte droite -->
+      <div class="card" style="display:flex; flex-direction:column; height:100%">
+        <div class="text-gray-600">Déjà un compte ?</div>
+        <div style="margin-top:auto; padding-top:1rem">
+          <a href="/login" class="btn inline-block">Se connecter</a>
+        </div>
+      </div>
     </div>
-  </div>
-</div>
-"""
+    """
     return page(content, APP_TITLE, user=user)
 
 @app.get("/signup", response_class=HTMLResponse)
