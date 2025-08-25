@@ -9,6 +9,7 @@ import httpx
 from fastapi import FastAPI, Request, Depends, Form, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
+from pathlib import Path
 
 from pydantic import EmailStr
 
@@ -25,15 +26,28 @@ from ics import Calendar
 APP_TITLE = "Saisonnier Pro – MVP"
 
 DB_URL_RAW = os.getenv("DATABASE_URL", "sqlite:///./saisonnier.db")
-# Render/Heroku donnent souvent "postgres://", SQLAlchemy 2.x veut "postgresql+psycopg2://"
-DB_URL = DB_URL_RAW.replace("postgres://", "postgresql+psycopg2://", 1)
+
+# Normalisation + choix automatique du driver (psycopg2 -> psycopg)
+DB_URL = DB_URL_RAW
+if DB_URL.startswith("postgres://"):
+    DB_URL = DB_URL.replace("postgres://", "postgresql://", 1)
+
+driver = ""
+try:
+    import psycopg2  # si dispo, on l'utilise
+    driver = "+psycopg2"
+except Exception:
+    try:
+        import psycopg  # sinon psycopg v3
+        driver = "+psycopg"
+    except Exception:
+        driver = ""
+
+if DB_URL.startswith("postgresql://") and driver:
+    DB_URL = DB_URL.replace("postgresql://", f"postgresql{driver}://", 1)
 
 connect_args = {"check_same_thread": False} if DB_URL.startswith("sqlite") else {}
-engine = create_engine(
-    DB_URL,
-    connect_args=connect_args,
-    pool_pre_ping=True,
-)
+engine = create_engine(DB_URL, connect_args=connect_args, pool_pre_ping=True)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
@@ -43,7 +57,7 @@ class User(Base):
     id = Column(Integer, primary_key=True)
     email = Column(String, unique=True, nullable=False)
     name = Column(String, default="")
-    password = Column(String, nullable=False)  # MVP only (hash en prod)
+    password = Column(String, nullable=False)  # (MVP) en prod -> hash
     properties = relationship("Property", back_populates="owner")
 
 class Property(Base):
@@ -69,14 +83,18 @@ class Reservation(Base):
     end_date = Column(Date, nullable=False)
     total_price = Column(Float, default=0.0)
     external_uid = Column(String)
-    __table_args__ = (UniqueConstraint('property_id','external_uid', name='uix_prop_uid'),)
+    __table_args__ = (UniqueConstraint('property_id', 'external_uid', name='uix_prop_uid'),)
     prop = relationship("Property", back_populates="reservations")
 
 Base.metadata.create_all(bind=engine)
 
 # ----------------- App / templating -----------------
 app = FastAPI(title=APP_TITLE)
-app.mount("/static", StaticFiles(directory="static"), name="static")
+
+# Monter /static seulement si le dossier existe
+static_dir = Path(__file__).parent / "static"
+if static_dir.exists():
+    app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 
 from jinja2 import Environment, select_autoescape
 env = Environment(autoescape=select_autoescape())
@@ -96,6 +114,46 @@ BASE_HEAD = """
 </style>
 """
 
+# LAYOUT en Jinja (plus de str.format)
+LAYOUT = """
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+    {{ head | safe }}
+    <title>{{ title }}</title>
+  </head>
+  <body class="bg-gray-50">
+    <header class="bg-white shadow">
+      <div class="max-w-6xl mx-auto py-4 px-4 flex items-center justify-between">
+        <a href="/" class="text-xl font-semibold" style="color:var(--primary)">{{ app_title }}</a>
+        <nav class="space-x-3 text-sm">
+          {% if user %}
+            <a class="badge" href="/properties">Logements</a>
+            <a class="badge" href="/calendar">Calendrier</a>
+            <a class="badge" href="/reservations">Réservations</a>
+            <a class="badge" href="/sync">Sync</a>
+            <a class="badge" href="/logout">Déconnexion</a>
+          {% else %}
+            <a class="badge" href="/login">Connexion</a>
+            <a class="badge" href="/signup">Créer un compte</a>
+          {% endif %}
+        </nav>
+      </div>
+    </header>
+    <main class="max-w-6xl mx-auto p-4">
+      {{ content | safe }}
+    </main>
+  </body>
+</html>
+"""
+
+def page(content_tpl: str, title: str, **ctx) -> HTMLResponse:
+    """Rend d'abord le contenu, puis l'injecte dans le layout Jinja."""
+    body = render_str(content_tpl, **ctx)
+    html = render_str(LAYOUT, head=BASE_HEAD, title=title, app_title=APP_TITLE, content=body, **ctx)
+    return HTMLResponse(html)
+
 SESSIONS: Dict[str,int] = {}
 
 def get_db():
@@ -111,32 +169,6 @@ async def current_user(request: Request, db: Session = Depends(get_db)) -> Optio
         uid = SESSIONS[token]
         return db.get(User, uid)
     return None
-
-LAYOUT = """
-<!doctype html>
-<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">{head}
-<title>{title}</title></head>
-<body class="bg-gray-50">
-<header class="bg-white shadow">
-  <div class="max-w-6xl mx-auto py-4 px-4 flex items-center justify-between">
-    <a href="/" class="text-xl font-semibold" style="color:var(--primary)">{app_title}</a>
-    <nav class="space-x-3 text-sm">
-      {% if user %}
-      <a class="badge" href="/properties">Logements</a>
-      <a class="badge" href="/calendar">Calendrier</a>
-      <a class="badge" href="/reservations">Réservations</a>
-      <a class="badge" href="/sync">Sync</a>
-      <a class="badge" href="/logout">Déconnexion</a>
-      {% else %}
-      <a class="badge" href="/login">Connexion</a>
-      <a class="badge" href="/signup">Créer un compte</a>
-      {% endif %}
-    </nav>
-  </div>
-</header>
-<main class="max-w-6xl mx-auto p-4">{content}</main>
-</body></html>
-"""
 
 # ----------------- Pages -----------------
 @app.get("/healthz")
@@ -158,8 +190,7 @@ async def home(request: Request, user: Optional[User] = Depends(current_user)):
       </div>
     </div>
     """
-    html = LAYOUT.format(head=BASE_HEAD, title=APP_TITLE, app_title=APP_TITLE, content=content)
-    return HTMLResponse(render_str(html, user=user))
+    return page(content, APP_TITLE, user=user)
 
 @app.get("/signup", response_class=HTMLResponse)
 async def signup_form(request: Request, user: Optional[User] = Depends(current_user)):
@@ -175,8 +206,7 @@ async def signup_form(request: Request, user: Optional[User] = Depends(current_u
       </form>
     </div>
     """
-    html = LAYOUT.format(head=BASE_HEAD, title="Créer un compte", app_title=APP_TITLE, content=content)
-    return HTMLResponse(render_str(html, user=None))
+    return page(content, "Créer un compte", user=None)
 
 @app.post("/signup")
 async def signup(name: str = Form(...), email: EmailStr = Form(...), password: str = Form(...), db: Session = Depends(get_db)):
@@ -202,8 +232,7 @@ async def login_form(request: Request, user: Optional[User] = Depends(current_us
       </form>
     </div>
     """
-    html = LAYOUT.format(head=BASE_HEAD, title="Connexion", app_title=APP_TITLE, content=content)
-    return HTMLResponse(render_str(html, user=None))
+    return page(content, "Connexion", user=None)
 
 @app.post("/login")
 async def login(email: EmailStr = Form(...), password: str = Form(...), db: Session = Depends(get_db)):
@@ -263,8 +292,7 @@ async def properties_page(request: Request, db: Session = Depends(get_db), user:
     </div>
     <div id="modal"></div>
     """
-    html = LAYOUT.format(head=BASE_HEAD, title="Logements", app_title=APP_TITLE, content=content)
-    return HTMLResponse(render_str(html, user=user, props=props))
+    return page(content, "Logements", user=user, props=props)
 
 @app.get("/properties/new", response_class=HTMLResponse)
 async def property_new_modal():
@@ -360,8 +388,7 @@ async def reservations_page(request: Request, property_id: Optional[int] = None,
     </div>
     <div id="modal"></div>
     """
-    html = LAYOUT.format(head=BASE_HEAD, title="Réservations", app_title=APP_TITLE, content=content)
-    return HTMLResponse(render_str(html, user=user, rows=rows, props=props, request=request))
+    return page(content, "Réservations", user=user, rows=rows, props=props, request=request)
 
 @app.get("/reservations/new", response_class=HTMLResponse)
 async def reservation_new_modal(request: Request, db: Session = Depends(get_db), user: Optional[User] = Depends(current_user)):
@@ -449,8 +476,7 @@ async def calendar_page(request: Request, property_id: Optional[int] = None, yea
       </table>
     </div>
     """
-    html = LAYOUT.format(head=BASE_HEAD, title="Calendrier", app_title=APP_TITLE, content=content)
-    return HTMLResponse(render_str(html, user=user))
+    return page(content, "Calendrier", user=user)
 
 # ----------------- iCal sync -----------------
 async def fetch_ical(url: str) -> Calendar:
