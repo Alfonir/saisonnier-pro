@@ -432,6 +432,22 @@ async def reservation_new_modal(request: Request, db: Session = Depends(get_db),
     </script>
     """)
 
+@app.get("/reservations.csv")
+def reservations_csv(property_id: Optional[int] = None, db: Session = Depends(get_db), user: Optional[User] = Depends(current_user)):
+    if not user: 
+        return RedirectResponse("/login", status_code=302)
+    q = select(Reservation).join(Property).where(Property.user_id == user.id)
+    if property_id: 
+        q = q.where(Reservation.property_id == property_id)
+    rows = db.execute(q.order_by(Reservation.start_date.desc())).scalars().all()
+    # Construire le CSV
+    lines = ["property,guest,source,start_date,end_date,total"]
+    for r in rows:
+        lines.append(f"{r.prop.title},{r.guest_name},{r.source},{r.start_date},{r.end_date},{(r.total_price or 0):.2f}")
+    csv_data = "\n".join(lines)
+    return Response(content=csv_data, media_type="text/csv",
+                    headers={"Content-Disposition":"attachment; filename=reservations.csv"})
+
 @app.post("/reservations")
 async def reservation_create(request: Request, db: Session = Depends(get_db), user: Optional[User] = Depends(current_user)):
     if not user: return RedirectResponse("/login", status_code=302)
