@@ -124,7 +124,7 @@ LAYOUT = """
     <title>{{ title }}</title>
   </head>
   <body class="bg-gray-50">
-    <header class="bg-white shadow">
+    <header class="bg-white shadow sticky top-0 z-10">
       <div class="max-w-6xl mx-auto py-4 px-4 flex items-center justify-between">
         <a href="/" class="text-xl font-semibold" style="color:var(--primary)">{{ app_title }}</a>
         <nav class="space-x-3 text-sm">
