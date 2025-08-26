@@ -1,63 +1,58 @@
-from __future__ import annotations
-import asyncio
-from datetime import date, datetime, timedelta
-from typing import Optional, Dict
-from uuid import uuid4
-import os
-import httpx
+# main.py
+# Saisonnier Pro - MVP complet (FastAPI)
+# ------------------------------------------------------------
+# Dépendances (déjà dans ton requirements.txt) :
+# fastapi, uvicorn, jinja2, sqlalchemy, aiosqlite, httpx,
+# python-multipart, pydantic[email], ics, python-dateutil
+# ------------------------------------------------------------
 
+from __future__ import annotations
+
+import os
+import io
+import csv
+import re
+import hashlib
+from datetime import datetime, date, timedelta
+from typing import Optional, List, Tuple
+
+import httpx
 from fastapi import FastAPI, Request, Depends, Form, HTTPException
-from fastapi.responses import HTMLResponse, RedirectResponse, Response
+from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse, PlainTextResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel, EmailStr
 from pathlib import Path
 
-from pydantic import EmailStr
-
 from sqlalchemy import (
-    Column, Integer, String, Date, DateTime, Float, ForeignKey, Text,
-    UniqueConstraint, select, create_engine
+    create_engine, Column, Integer, String, Date, Float, ForeignKey,
+    UniqueConstraint, func
 )
-from sqlalchemy.orm import sessionmaker, declarative_base, relationship, Session
+from sqlalchemy.orm import declarative_base, relationship, sessionmaker, Session
 
-from dateutil.relativedelta import relativedelta
-from ics import Calendar
+from ics import Calendar as IcsCalendar
+from dateutil.parser import parse as dparse
 
-# ----------------- App config -----------------
-import re
-import httpx
+# ============================================================
+# Config appli
+# ============================================================
 
-ICAL_RE = re.compile(r"^https?://.+\.ics(\?.*)?$", re.IGNORECASE)
+APP_TITLE = "StayFlow — Le cockpit de vos locations"
 
-def validate_ical_url(url: str) -> bool:
-    """Return True if url looks like a public .ics and responds < 400."""
-    if not url or not ICAL_RE.match(url):
-        return False
-    try:
-        with httpx.Client(timeout=5) as c:
-            r = c.head(url, follow_redirects=True)
-            return r.status_code < 400
-    except Exception:
-        return False
-
-if ical_url and not validate_ical_url(ical_url):
-    return page("<div class='container'><div class='card'>URL iCal invalide. Vérifie le lien public .ics de ton annonce.</div></div>", APP_TITLE, user=user, status_code=400)
-
-APP_TITLE = "StayFlow — “Le cockpit de vos locations”"
-
+# DATABASE_URL normalisée (sqlite local par défaut)
 DB_URL_RAW = os.getenv("DATABASE_URL", "sqlite:///./saisonnier.db")
 
-# Normalisation + choix automatique du driver (psycopg2 -> psycopg)
 DB_URL = DB_URL_RAW
 if DB_URL.startswith("postgres://"):
     DB_URL = DB_URL.replace("postgres://", "postgresql://", 1)
 
+# Ajout driver psycopg2 / psycopg si dispo
 driver = ""
 try:
-    import psycopg2  # si dispo, on l'utilise
+    import psycopg2  # type: ignore
     driver = "+psycopg2"
 except Exception:
     try:
-        import psycopg  # sinon psycopg v3
+        import psycopg  # type: ignore
         driver = "+psycopg"
     except Exception:
         driver = ""
@@ -70,84 +65,108 @@ engine = create_engine(DB_URL, connect_args=connect_args, pool_pre_ping=True)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
-# ----------------- Models -----------------
+
+# ============================================================
+# Utilitaires
+# ============================================================
+
+def hash_password(pw: str) -> str:
+    return hashlib.sha256(pw.encode("utf-8")).hexdigest()
+
+
+def get_db() -> Session:
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+# --- Validation URL iCal ---------------------------------------------------
+ICAL_RE = re.compile(r"^https?://.+\.ics(\?.*)?$", re.IGNORECASE)
+
+def validate_ical_url(url: str) -> bool:
+    if not url or not ICAL_RE.match(url):
+        return False
+    try:
+        with httpx.Client(timeout=5) as c:
+            r = c.head(url, follow_redirects=True)
+            return r.status_code < 400
+    except Exception:
+        return False
+
+
+# ============================================================
+# Modèles SQLAlchemy
+# ============================================================
+
 class User(Base):
     __tablename__ = "users"
+
     id = Column(Integer, primary_key=True)
-    email = Column(String, unique=True, nullable=False)
+    email = Column(String, unique=True, nullable=False, index=True)
     name = Column(String, default="")
-    password = Column(String, nullable=False)  # (MVP) en prod -> hash
+    password = Column(String, nullable=False)
+
     properties = relationship("Property", back_populates="owner")
+
 
 class Property(Base):
     __tablename__ = "properties"
+
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     title = Column(String, nullable=False)
-    address = Column(String, default="")
-    base_price = Column(Float, default=80.0)
-    capacity = Column(Integer, default=2)
-    ical_url = Column(Text)
-    last_sync = Column(DateTime)
+    ical_url = Column(String, default="")
+    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+
     owner = relationship("User", back_populates="properties")
-    reservations = relationship("Reservation", back_populates="prop", cascade="all, delete-orphan")
+    reservations = relationship("Reservation", back_populates="property", cascade="all, delete-orphan")
+
 
 class Reservation(Base):
     __tablename__ = "reservations"
+
     id = Column(Integer, primary_key=True)
-    property_id = Column(Integer, ForeignKey("properties.id"), nullable=False)
-    source = Column(String, default="manual")
+    property_id = Column(Integer, ForeignKey("properties.id"), nullable=False, index=True)
+
+    source = Column(String, default="manual")    # manual / airbnb / booking
     guest_name = Column(String, default="")
     start_date = Column(Date, nullable=False)
     end_date = Column(Date, nullable=False)
     total_price = Column(Float, default=0.0)
     external_uid = Column(String)
-    __table_args__ = (UniqueConstraint('property_id', 'external_uid', name='uix_prop_uid'),)
-    prop = relationship("Property", back_populates="reservations")
+
+    __table_args__ = (
+        UniqueConstraint('property_id', 'external_uid', name='uix_prop_uid'),
+    )
+
+    property = relationship("Property", back_populates="reservations")
+
 
 Base.metadata.create_all(bind=engine)
 
-# ----------------- App / templating -----------------
+
+# ============================================================
+# App / templating
+# ============================================================
+
 app = FastAPI(title=APP_TITLE)
 
+# static (évite l’erreur si dossier absent)
 static_dir = Path(__file__).parent / "static"
-if static_dir.exists():
-    app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
+static_dir.mkdir(parents=True, exist_ok=True)
+(app.mount if hasattr(app, "mount") else lambda *a, **k: None)(
+    "/static", StaticFiles(directory=str(static_dir)), name="static"
+)
 
+# Jinja minimal depuis string
 from jinja2 import Environment, select_autoescape
 env = Environment(autoescape=select_autoescape())
 
 def render_str(html: str, **ctx) -> str:
     return env.from_string(html).render(**ctx)
 
-# --- Home (replace your existing "/" route) --------------------------------
-from fastapi.responses import HTMLResponse
-
-@app.get("/", response_class=HTMLResponse)
-async def home(request: Request, user: Optional["User"] = Depends(current_user)):
-    content = """
-    <div class="container">
-      <div class="hero">
-        <div class="card" style="display:flex; flex-direction:column;">
-          <h1 class="text-3xl md:text-4xl font-semibold mb-2">Centralisez vos réservations.</h1>
-          <p class="text-gray-600">Import iCal, calendrier consolidé, et planning ménage.</p>
-          <div class="cta-stack">
-            <a href="/signup" class="btn btn-accent mt-6">Créer un compte</a>
-          </div>
-        </div>
-        <div class="card" style="display:flex; flex-direction:column;">
-          <div class="text-gray-600">Déjà un compte ?</div>
-          <div class="cta-stack">
-            <a href="/login" class="btn mt-6">Se connecter</a>
-          </div>
-        </div>
-      </div>
-    </div>
-    """
-    return page(content, APP_TITLE, user=user)
-# ---------------------------------------------------------------------------
-
-# --- Base HEAD with fonts, Tailwind CDN, minimal pro CSS -------------------
+# --- HEAD / Styles
 BASE_HEAD = """
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -156,9 +175,9 @@ BASE_HEAD = """
 <script src="https://unpkg.com/htmx.org@1.9.12"></script>
 <style>
 :root{
-  --primary:#0f172a;     /* bleu nuit pro */
-  --accent:#06b6d4;      /* cyan propre */
-  --muted:#f1f5f9;       /* fond cartes */
+  --primary:#0f172a;
+  --accent:#06b6d4;
+  --muted:#f1f5f9;
   --ring:rgba(6,182,212,.35);
 }
 *{ font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
@@ -192,76 +211,73 @@ input:focus, select:focus{ border-color:var(--accent); box-shadow:0 0 0 4px var(
 </style>
 """
 
-# LAYOUT en Jinja (plus de str.format)
-LAYOUT = """
+def page(content: str, title: str = APP_TITLE, user: Optional[User] = None) -> HTMLResponse:
+    html = render_str(f"""
 <!doctype html>
 <html lang="fr">
   <head>
-    <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-    {{ head | safe }}
-    <title>{{ title }}</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>{{{{ title }}}}</title>
+    {BASE_HEAD}
   </head>
-  <body class="bg-gray-50">
-    <header class="headbar sticky top-0 z-10">
-  <div class="container flex items-center justify-between py-3">
-    <a href="/" class="logo">
-  <span class="logo-mark"></span><span>{{ app_title }}</span>
-</a>
-    <nav class="space-x-2 text-sm">
-      {% if user %}
-        <a class="badge" href="/properties">Logements</a>
-        <a class="badge" href="/calendar">Calendrier</a>
-        <a class="badge" href="/reservations">Réservations</a>
-        <a class="badge" href="/sync">Sync</a>
-        <a class="badge" href="/logout">Déconnexion</a>
-      {% else %}
-        <a class="badge" href="/login">Connexion</a>
-        <a class="badge" href="/signup">Créer un compte</a>
-      {% endif %}
-    </nav>
-  </div>
-</header>
-
-    <main class="max-w-6xl mx-auto p-4">
-      {{ content | safe }}
+  <body>
+    <header class="headbar">
+      <div class="container" style="display:flex; align-items:center; justify-content:space-between; padding:.9rem 1rem;">
+        <div class="logo"><span class="logo-mark"></span> StayFlow</div>
+        <nav style="display:flex; gap:.5rem;">
+          <a class="badge" href="/properties">Logements</a>
+          <a class="badge" href="/calendar">Calendrier</a>
+          <a class="badge" href="/reservations">Réservations</a>
+          <a class="badge" href="/sync">Sync</a>
+          {% if user %}
+            <a class="badge" href="/logout">Déconnexion</a>
+          {% else %}
+            <a class="badge" href="/login">Connexion</a>
+            <a class="badge" href="/signup">Créer un compte</a>
+          {% endif %}
+        </nav>
+      </div>
+    </header>
+    <main style="padding:1rem 0;">
+      {content}
     </main>
   </body>
 </html>
-"""
-
-def page(content_tpl: str, title: str, **ctx) -> HTMLResponse:
-    """Rend d'abord le contenu, puis l'injecte dans le layout Jinja."""
-    body = render_str(content_tpl, **ctx)
-    html = render_str(LAYOUT, head=BASE_HEAD, title=title, app_title=APP_TITLE, content=body, **ctx)
+    """, title=title, user=user)
     return HTMLResponse(html)
 
-SESSIONS: Dict[str,int] = {}
 
-def get_db():
-    db = SessionLocal()
+# ============================================================
+# Auth minimale (cookie 'uid')
+# ============================================================
+
+def current_user(request: Request, db: Session = Depends(get_db)) -> Optional[User]:
+    uid = request.cookies.get("uid")
+    if not uid:
+        return None
     try:
-        yield db
-    finally:
-        db.close()
+        uid_int = int(uid)
+    except Exception:
+        return None
+    return db.query(User).filter(User.id == uid_int).first()
 
-async def current_user(request: Request, db: Session = Depends(get_db)) -> Optional[User]:
-    token = request.cookies.get("sess")
-    if token and token in SESSIONS:
-        uid = SESSIONS[token]
-        return db.get(User, uid)
-    return None
 
-# ----------------- Pages -----------------
+# ============================================================
+# Routes
+# ============================================================
+
 @app.get("/healthz")
-def health():
+def health() -> dict:
     return {"status": "ok"}
 
+
+# --- Home ---------------------------------------------------
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request, user: Optional[User] = Depends(current_user)):
     content = """
     <div class="container">
       <div class="hero">
-        <!-- Carte gauche -->
         <div class="card" style="display:flex; flex-direction:column;">
           <h1 class="text-3xl md:text-4xl font-semibold mb-2">Centralisez vos réservations.</h1>
           <p class="text-gray-600">Import iCal, calendrier consolidé, et planning ménage.</p>
@@ -269,8 +285,6 @@ async def home(request: Request, user: Optional[User] = Depends(current_user)):
             <a href="/signup" class="btn btn-accent mt-6">Créer un compte</a>
           </div>
         </div>
-
-        <!-- Carte droite -->
         <div class="card" style="display:flex; flex-direction:column;">
           <div class="text-gray-600">Déjà un compte ?</div>
           <div class="cta-stack">
@@ -282,392 +296,408 @@ async def home(request: Request, user: Optional[User] = Depends(current_user)):
     """
     return page(content, APP_TITLE, user=user)
 
+
+# --- Signup / Login / Logout --------------------------------
 @app.get("/signup", response_class=HTMLResponse)
-async def signup_form(request: Request, user: Optional[User] = Depends(current_user)):
+async def signup_get(request: Request, user: Optional[User] = Depends(current_user)):
     if user:
-        return RedirectResponse("/properties", status_code=302)
+        return RedirectResponse("/properties", status_code=303)
     content = """
-    <div class="card max-w-md mx-auto">
-      <form method="post" class="grid gap-3">
-        <input name="name" placeholder="Nom" class="border p-2 rounded" required>
-        <input name="email" placeholder="Email" class="border p-2 rounded" required>
-        <input type="password" name="password" placeholder="Mot de passe" class="border p-2 rounded" required>
-        <button class="btn">Créer mon compte</button>
-      </form>
+    <div class="container">
+      <div class="card" style="max-width:480px; margin:0 auto;">
+        <h2 class="text-xl font-semibold mb-2">Créer un compte</h2>
+        <form method="post" action="/signup">
+          <label>Email</label>
+          <input name="email" type="email" required />
+          <label class="mt-6">Nom</label>
+          <input name="name" type="text" />
+          <label class="mt-6">Mot de passe</label>
+          <input name="password" type="password" required />
+          <button class="btn btn-accent mt-6" type="submit">Créer</button>
+        </form>
+      </div>
     </div>
     """
-    return page(content, "Créer un compte", user=None)
+    return page(content, APP_TITLE, user=None)
 
 @app.post("/signup")
-async def signup(name: str = Form(...), email: EmailStr = Form(...), password: str = Form(...), db: Session = Depends(get_db)):
-    if db.execute(select(User).where(User.email == email)).scalar_one_or_none():
-        raise HTTPException(400, "Cet email est déjà utilisé")
-    u = User(email=email, name=name, password=password)
-    db.add(u); db.commit()
-    token = str(uuid4()); SESSIONS[token] = u.id
-    resp = RedirectResponse("/properties", status_code=302)
-    resp.set_cookie("sess", token, httponly=True)
-    return resp
+async def signup_post(
+    request: Request,
+    email: EmailStr = Form(...),
+    name: str = Form(""),
+    password: str = Form(...)
+):
+    db = SessionLocal()
+    try:
+        exists = db.query(User).filter(User.email == str(email).lower()).first()
+        if exists:
+            return HTMLResponse(page("<div class='container'><div class='card'>Email déjà utilisé.</div></div>", APP_TITLE), status_code=400)
+        u = User(email=str(email).lower(), name=name.strip(), password=hash_password(password))
+        db.add(u)
+        db.commit()
+        resp = RedirectResponse("/properties", status_code=303)
+        resp.set_cookie("uid", str(u.id), httponly=True, samesite="lax")
+        return resp
+    finally:
+        db.close()
 
 @app.get("/login", response_class=HTMLResponse)
-async def login_form(request: Request, user: Optional[User] = Depends(current_user)):
+async def login_get(request: Request, user: Optional[User] = Depends(current_user)):
     if user:
-        return RedirectResponse("/properties", status_code=302)
+        return RedirectResponse("/properties", status_code=303)
     content = """
-    <div class="card max-w-md mx-auto">
-      <form method="post" class="grid gap-3">
-        <input name="email" placeholder="Email" class="border p-2 rounded" required>
-        <input type="password" name="password" placeholder="Mot de passe" class="border p-2 rounded" required>
-        <button class="btn">Se connecter</button>
-      </form>
+    <div class="container">
+      <div class="card" style="max-width:480px; margin:0 auto;">
+        <h2 class="text-xl font-semibold mb-2">Connexion</h2>
+        <form method="post" action="/login">
+          <label>Email</label>
+          <input name="email" type="email" required />
+          <label class="mt-6">Mot de passe</label>
+          <input name="password" type="password" required />
+          <button class="btn mt-6" type="submit">Se connecter</button>
+        </form>
+      </div>
     </div>
     """
-    return page(content, "Connexion", user=None)
+    return page(content, APP_TITLE, user=None)
 
 @app.post("/login")
-async def login(email: EmailStr = Form(...), password: str = Form(...), db: Session = Depends(get_db)):
-    u = db.execute(select(User).where(User.email == email)).scalar_one_or_none()
-    if not u or u.password != password:
-        raise HTTPException(400, "Identifiants invalides (MVP)")
-    token = str(uuid4()); SESSIONS[token] = u.id
-    resp = RedirectResponse("/properties", status_code=302)
-    resp.set_cookie("sess", token, httponly=True)
-    return resp
+async def login_post(
+    request: Request,
+    email: EmailStr = Form(...),
+    password: str = Form(...)
+):
+    db = SessionLocal()
+    try:
+        u = db.query(User).filter(User.email == str(email).lower()).first()
+        if not u or u.password != hash_password(password):
+            return HTMLResponse(page("<div class='container'><div class='card'>Identifiants invalides.</div></div>", APP_TITLE), status_code=400)
+        resp = RedirectResponse("/properties", status_code=303)
+        resp.set_cookie("uid", str(u.id), httponly=True, samesite="lax")
+        return resp
+    finally:
+        db.close()
 
 @app.get("/logout")
-async def logout(request: Request):
-    token = request.cookies.get("sess")
-    if token and token in SESSIONS:
-        del SESSIONS[token]
-    resp = RedirectResponse("/", status_code=302)
-    resp.delete_cookie("sess")
+async def logout():
+    resp = RedirectResponse("/", status_code=303)
+    resp.delete_cookie("uid")
     return resp
 
-def get_user_props(db: Session, user_id: int):
-    return db.execute(select(Property).where(Property.user_id == user_id).order_by(Property.id.desc())).scalars().all()
 
+# --- Logements --------------------------------------------------------------
 @app.get("/properties", response_class=HTMLResponse)
-async def properties_page(request: Request, db: Session = Depends(get_db), user: Optional[User] = Depends(current_user)):
-    if not user: return RedirectResponse("/login", status_code=302)
-    props = get_user_props(db, user.id)
-    content = """
-    <div class="flex items-center justify-between mb-4">
-      <h1 class="text-2xl font-semibold">Mes logements</h1>
-      <a href="#" hx-get="/properties/new" hx-target="#modal" class="btn btn-gold">Ajouter</a>
-    </div>
-    <div class="grid md:grid-cols-2 gap-4">
-      {% for p in props %}
+async def properties_list(request: Request, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    if not user:
+        return RedirectResponse("/login", status_code=303)
+    props = db.query(Property).filter(Property.owner_id == user.id).order_by(Property.id.desc()).all()
+    rows = []
+    for p in props:
+        rows.append(f"""
+          <tr>
+            <td>{p.title}</td>
+            <td>{p.ical_url or "-"}</td>
+            <td style="text-align:right;">
+              <a class="badge" href="/properties/{p.id}/edit">Éditer</a>
+              <a class="badge" href="/properties/{p.id}/delete" onclick="return confirm('Supprimer ?')">Supprimer</a>
+            </td>
+          </tr>
+        """)
+    table = "<table style='width:100%; border-collapse:separate; border-spacing:0 .5rem;'>" + "".join(rows) + "</table>" if rows else "<div class='text-gray-600'>Aucun logement.</div>"
+
+    content = f"""
+    <div class="container">
       <div class="card">
-        <div class="flex items-center justify-between">
-          <div>
-            <div class="font-semibold">{{p.title}}</div>
-            <div class="text-sm text-gray-600">{{p.address}}</div>
-          </div>
-          <div class="text-right">
-            <div class="text-sm">Base: {{'%.2f'|format(p.base_price)}} €/nuit</div>
-            {% if p.last_sync %}<div class="text-xs text-gray-500">Synch: {{p.last_sync}}</div>{% endif %}
-          </div>
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-xl font-semibold">Logements</h2>
+          <a class="badge" href="/properties/add">Ajouter</a>
         </div>
-        <div class="mt-3 text-sm">
-          <div>Capacité: {{p.capacity}}</div>
-          <div class="truncate">iCal: {{p.ical_url or '—'}}</div>
-        </div>
-        <div class="mt-3 flex gap-2">
-          <a class="badge" href="/reservations?property_id={{p.id}}">Réservations</a>
-          <a class="badge" href="/calendar?property_id={{p.id}}">Calendrier</a>
-          <a class="badge" href="/properties/{{p.id}}/edit" hx-get="/properties/{{p.id}}/edit" hx-target="#modal">Éditer</a>
-        </div>
+        {table}
       </div>
-      {% endfor %}
     </div>
-    <div id="modal"></div>
     """
-    return page(content, "Logements", user=user, props=props)
+    return page(content, APP_TITLE, user=user)
 
-@app.get("/properties/new", response_class=HTMLResponse)
-async def property_new_modal():
-    return HTMLResponse("""
-    <div class="card max-w-xl mx-auto">
-      <form method="post" action="/properties" class="grid grid-cols-2 gap-3">
-        <input name="title" placeholder="Titre" class="border p-2 rounded col-span-2" required>
-        <input name="address" placeholder="Adresse" class="border p-2 rounded col-span-2">
-        <input name="base_price" placeholder="Prix/nuit (€)" class="border p-2 rounded" value="80">
-        <input name="capacity" placeholder="Capacité" class="border p-2 rounded" value="2">
-        <input name="ical_url" placeholder="URL iCal (optionnel)" class="border p-2 rounded col-span-2">
-        <button class="btn col-span-2">Enregistrer</button>
-      </form>
-    </div>
-    """)
-
-@app.post("/properties")
-async def property_create(request: Request, db: Session = Depends(get_db), user: Optional[User] = Depends(current_user)):
-    if not user: return RedirectResponse("/login", status_code=302)
-    form = await request.form()
-    p = Property(
-        user_id=user.id,
-        title=form.get("title"),
-        address=form.get("address",""),
-        base_price=float(form.get("base_price") or 80),
-        capacity=int(form.get("capacity") or 2),
-        ical_url=form.get("ical_url") or None
-    )
-    db.add(p); db.commit()
-    return RedirectResponse("/properties", status_code=302)
-
-@app.get("/properties/{pid}/edit", response_class=HTMLResponse)
-async def property_edit_modal(pid: int, db: Session = Depends(get_db), user: Optional[User] = Depends(current_user)):
-    if not user: return RedirectResponse("/login", status_code=302)
-    p = db.get(Property, pid)
-    if not p or p.user_id != user.id: raise HTTPException(404)
-    return HTMLResponse(f"""
-    <div class="card max-w-xl mx-auto">
-      <form method="post" action="/properties/{pid}/edit" class="grid grid-cols-2 gap-3">
-        <input name="title" value="{p.title}" class="border p-2 rounded col-span-2" required>
-        <input name="address" value="{p.address or ''}" class="border p-2 rounded col-span-2">
-        <input name="base_price" value="{p.base_price}" class="border p-2 rounded">
-        <input name="capacity" value="{p.capacity}" class="border p-2 rounded">
-        <input name="ical_url" value="{p.ical_url or ''}" class="border p-2 rounded col-span-2">
-        <button class="btn col-span-2">Mettre à jour</button>
-      </form>
-    </div>
-    """)
-
-@app.post("/properties/{pid}/edit")
-async def property_update(pid: int, request: Request, db: Session = Depends(get_db), user: Optional[User] = Depends(current_user)):
-    if not user: return RedirectResponse("/login", status_code=302)
-    p = db.get(Property, pid)
-    if not p or p.user_id != user.id: raise HTTPException(404)
-    form = await request.form()
-    p.title = form.get("title")
-    p.address = form.get("address")
-    p.base_price = float(form.get("base_price"))
-    p.capacity = int(form.get("capacity"))
-    p.ical_url = form.get("ical_url") or None
-    db.commit()
-    return RedirectResponse("/properties", status_code=302)
-
-@app.get("/reservations", response_class=HTMLResponse)
-async def reservations_page(request: Request, property_id: Optional[int] = None, db: Session = Depends(get_db), user: Optional[User] = Depends(current_user)):
-    if not user: return RedirectResponse("/login", status_code=302)
-    q = select(Reservation).join(Property).where(Property.user_id == user.id)
-    if property_id: q = q.where(Reservation.property_id == property_id)
-    rows = db.execute(q.order_by(Reservation.start_date.desc())).scalars().all()
-    props = get_user_props(db, user.id)
+@app.get("/properties/add", response_class=HTMLResponse)
+async def properties_add_form(request: Request, user: User = Depends(current_user)):
+    if not user:
+        return RedirectResponse("/login", status_code=303)
     content = """
-    <div class="flex items-center justify-between mb-4">
-  <h1 class="text-2xl font-semibold">Réservations</h1>
-  <div class="flex gap-2">
-    <a class="badge" href="/reservations.csv{% if request.query_params.get('property_id') %}?property_id={{ request.query_params.get('property_id') }}{% endif %}">
-      Exporter CSV
-    </a>
-    <a href="#" hx-get="/reservations/new" hx-target="#modal" class="btn btn-gold">Ajouter</a>
-  </div>
-</div>
-    <form method="get" class="mb-3">
-      <select name="property_id" class="border p-2 rounded" onchange="this.form.submit()">
-        <option value="">Tous les logements</option>
-        {% for p in props %}
-          <option value="{{p.id}}">{{p.title}}</option>
-        {% endfor %}
-      </select>
-    </form>
-    <div class="card overflow-auto">
-      <table class="min-w-full text-sm">
-        <thead><tr class="text-left"><th>Logement</th><th>Voyageur</th><th>Source</th><th>Arrivée</th><th>Départ</th><th>Total</th></tr></thead>
-        <tbody>
-          {% for r in rows %}
-          <tr class="border-t"><td>{{r.prop.title}}</td><td>{{r.guest_name}}</td><td>{{r.source}}</td><td>{{r.start_date}}</td><td>{{r.end_date}}</td><td>{{'%.2f'|format(r.total_price or 0)}}</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-    <div id="modal"></div>
-    """
-    return page(content, "Réservations", user=user, rows=rows, props=props, request=request)
+    <div class="container">
+      <div class="card" style="max-width:640px; margin:0 auto;">
+        <h2 class="text-xl font-semibold mb-2">Ajouter un logement</h2>
+        <form method="post" action="/properties/add">
+          <label>Titre</label>
+          <input name="title" required />
 
-@app.get("/reservations/new", response_class=HTMLResponse)
-async def reservation_new_modal(request: Request, db: Session = Depends(get_db), user: Optional[User] = Depends(current_user)):
-    if not user: return RedirectResponse("/login", status_code=302)
-    props = get_user_props(db, user.id)
-    # on met le prix/nuit dans data-price
-    options = "".join([f"<option value='{p.id}' data-price='{p.base_price}'>{p.title} — {p.base_price:.2f} €/nuit</option>" for p in props])
-    return HTMLResponse(f"""
-    <div class="card max-w-xl mx-auto">
-      <form method="post" action="/reservations" class="grid grid-cols-2 gap-3">
-        <select name="property_id" class="border p-2 rounded col-span-2" required>{options}</select>
-        <input name="guest_name" placeholder="Nom voyageur" class="border p-2 rounded col-span-2" required>
-        <input type="date" name="start_date" class="border p-2 rounded" required>
-        <input type="date" name="end_date" class="border p-2 rounded" required>
-        <input id="total_price" name="total_price" placeholder="Total (€)" class="border p-2 rounded">
-        <button class="btn col-span-2">Enregistrer</button>
-      </form>
+          <label class="mt-6">URL iCal (optionnel)</label>
+          <input name="ical_url" placeholder="https://... .ics" />
+
+          <button class="btn btn-accent mt-6" type="submit">Créer</button>
+        </form>
+      </div>
     </div>
-    <script>
-    function calc() {{
-      const sel = document.querySelector("select[name='property_id']");
-      const price = parseFloat(sel.selectedOptions[0]?.dataset.price || 0);
-      const s = new Date(document.querySelector("input[name='start_date']").value);
-      const e = new Date(document.querySelector("input[name='end_date']").value);
-      if (!price || isNaN(s) || isNaN(e)) return;
-      const nights = Math.max(0, Math.round((e - s) / (1000*60*60*24)));
-      document.getElementById("total_price").value = (nights * price).toFixed(2);
-    }}
-    ["change","input"].forEach(ev => {{
-      document.querySelector("select[name='property_id']").addEventListener(ev, calc);
-      document.querySelector("input[name='start_date']").addEventListener(ev, calc);
-      document.querySelector("input[name='end_date']").addEventListener(ev, calc);
-    }});
-    </script>
-    """)
+    """
+    return page(content, APP_TITLE, user=user)
+
+@app.post("/properties/add")
+async def properties_add(request: Request, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    if not user:
+        return RedirectResponse("/login", status_code=303)
+    form = await request.form()
+    title = (form.get("title") or "").strip()
+    ical_url = (form.get("ical_url") or "").strip()
+
+    if not title:
+        return HTMLResponse(page("<div class='container'><div class='card'>Le titre est requis.</div></div>", APP_TITLE, user=user), status_code=400)
+
+    if ical_url and not validate_ical_url(ical_url):
+        return HTMLResponse(page("<div class='container'><div class='card'>URL iCal invalide. Vérifie le lien public .ics.</div></div>", APP_TITLE, user=user), status_code=400)
+
+    p = Property(title=title, ical_url=ical_url, owner_id=user.id)
+    db.add(p)
+    db.commit()
+    return RedirectResponse("/properties", status_code=303)
+
+@app.get("/properties/{prop_id}/edit", response_class=HTMLResponse)
+async def properties_edit_form(prop_id: int, request: Request, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    if not user:
+        return RedirectResponse("/login", status_code=303)
+    p = db.query(Property).filter(Property.id == prop_id, Property.owner_id == user.id).first()
+    if not p:
+        return HTMLResponse(page("<div class='container'><div class='card'>Logement introuvable.</div></div>", APP_TITLE, user=user), status_code=404)
+    content = f"""
+    <div class="container">
+      <div class="card" style="max-width:640px; margin:0 auto;">
+        <h2 class="text-xl font-semibold mb-2">Éditer le logement</h2>
+        <form method="post" action="/properties/{p.id}/edit">
+          <label>Titre</label>
+          <input name="title" value="{p.title}" required />
+
+          <label class="mt-6">URL iCal (optionnel)</label>
+          <input name="ical_url" value="{p.ical_url or ''}" placeholder="https://... .ics" />
+
+          <button class="btn mt-6" type="submit">Enregistrer</button>
+        </form>
+      </div>
+    </div>
+    """
+    return page(content, APP_TITLE, user=user)
+
+@app.post("/properties/{prop_id}/edit")
+async def properties_edit(prop_id: int, request: Request, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    if not user:
+        return RedirectResponse("/login", status_code=303)
+    form = await request.form()
+    title = (form.get("title") or "").strip()
+    ical_url = (form.get("ical_url") or "").strip()
+
+    if not title:
+        return HTMLResponse(page("<div class='container'><div class='card'>Le titre est requis.</div></div>", APP_TITLE, user=user), status_code=400)
+
+    if ical_url and not validate_ical_url(ical_url):
+        return HTMLResponse(page("<div class='container'><div class='card'>URL iCal invalide. Vérifie le lien public .ics.</div></div>", APP_TITLE, user=user), status_code=400)
+
+    p = db.query(Property).filter(Property.id == prop_id, Property.owner_id == user.id).first()
+    if not p:
+        return HTMLResponse(page("<div class='container'><div class='card'>Logement introuvable.</div></div>", APP_TITLE, user=user), status_code=404)
+
+    p.title = title
+    p.ical_url = ical_url
+    db.commit()
+    return RedirectResponse("/properties", status_code=303)
+
+@app.get("/properties/{prop_id}/delete")
+async def properties_delete(prop_id: int, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    if not user:
+        return RedirectResponse("/login", status_code=303)
+    p = db.query(Property).filter(Property.id == prop_id, Property.owner_id == user.id).first()
+    if p:
+        db.delete(p)
+        db.commit()
+    return RedirectResponse("/properties", status_code=303)
+
+
+# --- Réservations -----------------------------------------------------------
+@app.get("/reservations", response_class=HTMLResponse)
+async def reservations_page(request: Request, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    if not user:
+        return RedirectResponse("/login", status_code=303)
+    rows = (
+        db.query(Reservation)
+        .join(Property, Reservation.property_id == Property.id)
+        .filter(Property.owner_id == user.id)
+        .order_by(Reservation.start_date.desc())
+        .all()
+    )
+    items = []
+    for r in rows:
+        items.append(f"<li>{getattr(r.property,'title','')} — {r.guest_name} — {r.start_date} → {r.end_date} — {int((r.end_date - r.start_date).days)} nuits</li>")
+    listing = "<ul>" + "\n".join(items) + "</ul>" if items else "<div class='text-gray-600'>Aucune réservation.</div>"
+
+    header = """
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="text-xl font-semibold">Réservations</h2>
+      <a class="badge" href="/reservations.csv" download>Exporter CSV</a>
+    </div>
+    """
+    content = f"""
+    <div class="container">
+      <div class="card">
+        {header}
+        {listing}
+      </div>
+    </div>
+    """
+    return page(content, APP_TITLE, user=user)
 
 @app.get("/reservations.csv")
-def reservations_csv(property_id: Optional[int] = None, db: Session = Depends(get_db), user: Optional[User] = Depends(current_user)):
-    if not user: 
-        return RedirectResponse("/login", status_code=302)
-    q = select(Reservation).join(Property).where(Property.user_id == user.id)
-    if property_id: 
-        q = q.where(Reservation.property_id == property_id)
-    rows = db.execute(q.order_by(Reservation.start_date.desc())).scalars().all()
-    # Construire le CSV
-    lines = ["property,guest,source,start_date,end_date,total"]
-    for r in rows:
-        lines.append(f"{r.prop.title},{r.guest_name},{r.source},{r.start_date},{r.end_date},{(r.total_price or 0):.2f}")
-    csv_data = "\n".join(lines)
-    return Response(content=csv_data, media_type="text/csv",
-                    headers={"Content-Disposition":"attachment; filename=reservations.csv"})
-
-@app.post("/reservations")
-async def reservation_create(request: Request, db: Session = Depends(get_db), user: Optional[User] = Depends(current_user)):
-    if not user: return RedirectResponse("/login", status_code=302)
-    form = await request.form()
-    r = Reservation(
-        property_id=int(form.get("property_id")),
-        guest_name=form.get("guest_name"),
-        source="manual",
-        start_date=datetime.strptime(form.get("start_date"), "%Y-%m-%d").date(),
-        end_date=datetime.strptime(form.get("end_date"), "%Y-%m-%d").date(),
-        total_price=float(form.get("total_price") or 0)
+async def reservations_csv(user: User = Depends(current_user), db: Session = Depends(get_db)):
+    if not user:
+        return RedirectResponse("/login", status_code=303)
+    rows = (
+        db.query(Reservation)
+        .join(Property, Reservation.property_id == Property.id)
+        .filter(Property.owner_id == user.id)
+        .order_by(Reservation.start_date.desc())
+        .all()
     )
-    db.add(r); db.commit()
-    return RedirectResponse("/reservations", status_code=302)
-
-@app.get("/calendar", response_class=HTMLResponse)
-async def calendar_page(request: Request, property_id: Optional[int] = None, year: Optional[int]=None, month: Optional[int]=None, db: Session = Depends(get_db), user: Optional[User] = Depends(current_user)):
-    if not user: return RedirectResponse("/login", status_code=302)
-    today = date.today()
-    year = year or today.year
-    month = month or today.month
-    first = date(year, month, 1)
-    last = (first + relativedelta(months=1)) - timedelta(days=1)
-
-    props = get_user_props(db, user.id)
-    prs = props if not property_id else [p for p in props if p.id == property_id]
-
-    rows = db.execute(
-        select(Reservation).join(Property)
-        .where(Property.user_id == user.id)
-        .where(Reservation.start_date <= last)
-        .where(Reservation.end_date >= first)
-    ).scalars().all()
-
-    days = [(first + timedelta(days=i)) for i in range((last-first).days+1)]
-    occ = {p.id: {d: False for d in days} for p in prs}
+    buf = io.StringIO()
+    w = csv.writer(buf)
+    w.writerow(["Logement", "Voyageur", "Début", "Fin", "Nuits", "Source", "Montant"])
     for r in rows:
-        for d in days:
-            if r.property_id in occ and (r.start_date <= d < r.end_date):
-                occ[r.property_id][d] = True
+        nights = max(0, (r.end_date - r.start_date).days)
+        w.writerow([
+            getattr(r.property, "title", ""),
+            r.guest_name,
+            r.start_date,
+            r.end_date,
+            nights,
+            r.source,
+            r.total_price,
+        ])
+    buf.seek(0)
+    return StreamingResponse(
+        io.BytesIO(buf.getvalue().encode("utf-8")),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": 'attachment; filename="reservations.csv"'}
+    )
 
-    head_days = "".join([f"<th class='px-2 text-xs'>{d.day}</th>" for d in days])
-    lines = []
-    for p in prs:
-        tds = []
-        for d in days:
-            busy = occ[p.id][d]
-            tds.append(f"<td class='w-5 h-5 {'bg-green-500' if busy else 'bg-gray-200'}'></td>")
-        lines.append(f"<tr><td class='text-xs pr-2 whitespace-nowrap'>{p.title}</td>{''.join(tds)}</tr>")
 
-    selector = "".join([f"<option value='{p.id}' {'selected' if property_id and p.id==property_id else ''}>{p.title}</option>" for p in props])
-    content = f"""
-    <div class="flex items-center justify-between mb-4">
-      <h1 class="text-2xl font-semibold">Calendrier – {month:02d}/{year}</h1>
-      <form method="get" class="flex items-center gap-2">
-        <select name="property_id" class="border p-2 rounded"><option value="">Tous</option>{selector}</select>
-        <input name="month" value="{month}" class="border p-2 rounded w-16">
-        <input name="year" value="{year}" class="border p-2 rounded w-20">
-        <button class="btn-gold btn">Voir</button>
-      </form>
-    </div>
-    <div class="card overflow-auto">
-      <table class="text-[11px]">
-        <thead><tr><th class="pr-2">Logement</th>{head_days}</tr></thead>
-        <tbody>{''.join(lines)}</tbody>
-      </table>
-    </div>
-    """
-    return page(content, "Calendrier", user=user)
+# --- Sync iCal --------------------------------------------------------------
+@app.get("/sync")
+async def sync_all(user: User = Depends(current_user), db: Session = Depends(get_db)):
+    if not user:
+        return RedirectResponse("/login", status_code=303)
 
-# ----------------- iCal sync -----------------
-async def fetch_ical(url: str) -> Calendar:
-    async with httpx.AsyncClient(timeout=20) as client:
-        r = await client.get(url)
-        r.raise_for_status()
-        return Calendar(r.text)
+    imported = 0
+    props = db.query(Property).filter(Property.owner_id == user.id, Property.ical_url != "").all()
+    for p in props:
+        if not validate_ical_url(p.ical_url):
+            continue
+        try:
+            with httpx.Client(timeout=15) as c:
+                r = c.get(p.ical_url, follow_redirects=True)
+                r.raise_for_status()
+                cal = IcsCalendar(r.text)
+        except Exception:
+            continue
 
-async def sync_property_ical(db: Session, prop: Property):
-    if not prop.ical_url: return
-    try:
-        cal = await fetch_ical(prop.ical_url)
-    except Exception:
-        return
-    for ev in cal.events:
-        start = ev.begin.date() if hasattr(ev.begin, 'date') else ev.begin
-        end = ev.end.date() if hasattr(ev.end, 'date') else ev.end
-        uid = (ev.uid or f"{ev.name}-{start}-{end}")[:255]
-        existing = db.execute(select(Reservation).where(Reservation.property_id==prop.id, Reservation.external_uid==uid)).scalar_one_or_none()
-        if existing:
-            existing.start_date = start
-            existing.end_date = end
-            existing.guest_name = ev.name or existing.guest_name
-        else:
-            db.add(Reservation(property_id=prop.id, source="ical", guest_name=ev.name or "(iCal)", start_date=start, end_date=end, external_uid=uid))
-    prop.last_sync = datetime.utcnow()
+        for ev in cal.events:
+            # dates
+            try:
+                dt_start = ev.begin.date() if hasattr(ev.begin, "date") else dparse(str(ev.begin)).date()
+                dt_end = ev.end.date() if hasattr(ev.end, "date") else dparse(str(ev.end)).date()
+            except Exception:
+                continue
+
+            uid = str(ev.uid or f"{p.id}-{ev.begin}-{ev.end}")
+            already = db.query(Reservation).filter(
+                Reservation.property_id == p.id,
+                Reservation.external_uid == uid
+            ).first()
+            if already:
+                continue
+
+            guest = (ev.name or "").strip()
+            db.add(Reservation(
+                property_id=p.id,
+                source="ical",
+                guest_name=guest,
+                start_date=dt_start,
+                end_date=dt_end,
+                total_price=0.0,
+                external_uid=uid
+            ))
+            imported += 1
     db.commit()
 
-@app.get("/sync")
-async def sync_now(db: Session = Depends(get_db), user: Optional[User] = Depends(current_user)):
-    if not user: return RedirectResponse("/login", status_code=302)
-    props = db.execute(select(Property).where(Property.user_id==user.id).where(Property.ical_url.isnot(None))).scalars().all()
-    for p in props:
-        await sync_property_ical(db, p)
-    return RedirectResponse("/properties", status_code=302)
+    return HTMLResponse(page(f"<div class='container'><div class='card'>Import terminé : {imported} réservation(s) ajoutée(s).</div></div>", APP_TITLE, user=user))
 
-@app.on_event("startup")
-async def schedule_sync_task():
-    async def _task():
-        while True:
-            db = SessionLocal()
-            try:
-                props = db.execute(select(Property).where(Property.ical_url.isnot(None))).scalars().all()
-                for p in props:
-                    await sync_property_ical(db, p)
-            finally:
-                db.close()
-            await asyncio.sleep(30 * 60)
-    asyncio.create_task(_task())
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=8000)
+# --- Calendrier simple ------------------------------------------------------
+@app.get("/calendar", response_class=HTMLResponse)
+async def calendar_view(request: Request, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    if not user:
+        return RedirectResponse("/login", status_code=303)
 
-# ----------------- Page error -----------------
-from fastapi.responses import PlainTextResponse
+    # Création d’un tableau mois en cours + 2 mois
+    start = date.today().replace(day=1)
+    months = [start, (start + timedelta(days=32)).replace(day=1), (start + timedelta(days=64)).replace(day=1)]
 
-@app.exception_handler(404)
-async def not_found(req, exc):
-    c = "<div class='container'><div class='card'>Page introuvable.</div></div>"
-    return HTMLResponse(page(c, APP_TITLE), status_code=404)
+    # Cache des réservations par jour
+    res = (
+        db.query(Reservation)
+        .join(Property, Reservation.property_id == Property.id)
+        .filter(Property.owner_id == user.id)
+        .all()
+    )
+    busy = {}  # (prop_id, day) -> True
+    titles = {}
+    for r in res:
+        d0, d1 = r.start_date, r.end_date
+        d = d0
+        while d < d1:
+            busy[(r.property_id, d.isoformat())] = True
+            d += timedelta(days=1)
+        titles[r.property_id] = getattr(r.property, "title", "")
 
-@app.exception_handler(500)
-async def server_err(req, exc):
-    c = "<div class='container'><div class='card'>Une erreur est survenue. Réessaie dans un instant.</div></div>"
-    return HTMLResponse(page(c, APP_TITLE), status_code=500)
+    # rendus
+    month_blocks = []
+    for m in months:
+        # nombre de jours du mois
+        next_m = (m + timedelta(days=32)).replace(day=1)
+        days = (next_m - m).days
+
+        rows = []
+        for pid, title in sorted(titles.items(), key=lambda kv: kv[1].lower()):
+            cells = []
+            for d in range(1, days + 1):
+                key = (pid, date(m.year, m.month, d).isoformat())
+                mark = "●" if busy.get(key) else ""
+                cells.append(f"<td style='text-align:center; padding:.25rem .35rem;'>{mark}</td>")
+            rows.append(f"<tr><th style='text-align:left; padding:.25rem .35rem;'>{title}</th>{''.join(cells)}</tr>")
+        header_days = "".join([f"<th style='padding:.25rem .35rem; text-align:center;'>{i}</th>" for i in range(1, days + 1)])
+        table = f"""
+          <div class="card" style="overflow:auto;">
+            <h3 class="text-xl font-semibold mb-2">{m.strftime('%B %Y').capitalize()}</h3>
+            <table style="border-collapse:separate; border-spacing:0 .25rem;">
+              <thead><tr><th></th>{header_days}</tr></thead>
+              <tbody>{''.join(rows) or "<tr><td>Aucun logement</td></tr>"}</tbody>
+            </table>
+          </div>
+        """
+        month_blocks.append(table)
+
+    content = f"""
+    <div class="container" style="display:grid; gap:1rem;">
+      {''.join(month_blocks)}
+    </div>
+    """
+    return page(content, APP_TITLE, user=user)
+
+
+# ------------------------------------------------------------
+# Lancement local (utile pour tester en dev)
+# uvicorn main:app --reload
+# ------------------------------------------------------------
