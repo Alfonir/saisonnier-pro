@@ -110,7 +110,6 @@ Base.metadata.create_all(bind=engine)
 # ----------------- App / templating -----------------
 app = FastAPI(title=APP_TITLE)
 
-# Monter /static seulement si le dossier existe
 static_dir = Path(__file__).parent / "static"
 if static_dir.exists():
     app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
@@ -121,6 +120,34 @@ env = Environment(autoescape=select_autoescape())
 def render_str(html: str, **ctx) -> str:
     return env.from_string(html).render(**ctx)
 
+# --- Home (replace your existing "/" route) --------------------------------
+from fastapi.responses import HTMLResponse
+
+@app.get("/", response_class=HTMLResponse)
+async def home(request: Request, user: Optional["User"] = Depends(current_user)):
+    content = """
+    <div class="container">
+      <div class="hero">
+        <div class="card" style="display:flex; flex-direction:column;">
+          <h1 class="text-3xl md:text-4xl font-semibold mb-2">Centralisez vos réservations.</h1>
+          <p class="text-gray-600">Import iCal, calendrier consolidé, et planning ménage.</p>
+          <div class="cta-stack">
+            <a href="/signup" class="btn btn-accent mt-6">Créer un compte</a>
+          </div>
+        </div>
+        <div class="card" style="display:flex; flex-direction:column;">
+          <div class="text-gray-600">Déjà un compte ?</div>
+          <div class="cta-stack">
+            <a href="/login" class="btn mt-6">Se connecter</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    """
+    return page(content, APP_TITLE, user=user)
+# ---------------------------------------------------------------------------
+
+# --- Base HEAD with fonts, Tailwind CDN, minimal pro CSS -------------------
 BASE_HEAD = """
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
