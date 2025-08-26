@@ -422,7 +422,6 @@ async def signup_post(
         return resp
 
     except Exception as e:
-        # renvoie l’erreur à l’écran pour debug
         return HTMLResponse(
             page(f"<div class='container'><div class='card'>Erreur serveur pendant l’inscription.<br><small>{type(e).__name__}: {e}</small></div></div>", APP_TITLE),
             status_code=500
