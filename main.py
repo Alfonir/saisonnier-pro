@@ -388,37 +388,26 @@ async def signup_post(
     name: str = Form(""),
     password: str = Form(...)
 ):
-    # Vérif simple côté serveur (au lieu de laisser lever un 500)
     email_clean = (email or "").strip().lower()
-    name_clean = (name or "").strip()
-    pwd = (password or "").strip()
+    name_clean  = (name or "").strip()
+    pwd         = (password or "").strip()
 
     if not email_clean or "@" not in email_clean:
-        return HTMLResponse(
-            page("<div class='container'><div class='card'>Email invalide.</div></div>", APP_TITLE),
-            status_code=400,
-        )
+        return HTMLResponse(page("<div class='container'><div class='card'>Email invalide.</div></div>", APP_TITLE), status_code=400)
     if not pwd:
-        return HTMLResponse(
-            page("<div class='container'><div class='card'>Mot de passe requis.</div></div>", APP_TITLE),
-            status_code=400,
-        )
+        return HTMLResponse(page("<div class='container'><div class='card'>Mot de passe requis.</div></div>", APP_TITLE), status_code=400)
 
     db = SessionLocal()
     try:
-        # Vérifie si la table existe (si elle n’existe pas, on crée tout de suite)
+        # force la création des tables si besoin
         try:
             db.execute("SELECT 1 FROM users LIMIT 1")
         except OperationalError:
             Base.metadata.create_all(bind=engine)
 
-        # Email déjà utilisé ?
         exists = db.query(User).filter(User.email == email_clean).first()
         if exists:
-            return HTMLResponse(
-                page("<div class='container'><div class='card'>Email déjà utilisé.</div></div>", APP_TITLE),
-                status_code=400,
-            )
+            return HTMLResponse(page("<div class='container'><div class='card'>Email déjà utilisé.</div></div>", APP_TITLE), status_code=400)
 
         u = User(email=email_clean, name=name_clean, password=hash_password(pwd))
         db.add(u)
@@ -426,20 +415,18 @@ async def signup_post(
             db.commit()
         except IntegrityError:
             db.rollback()
-            return HTMLResponse(
-                page("<div class='container'><div class='card'>Ce compte existe déjà.</div></div>", APP_TITLE),
-                status_code=400,
-            )
+            return HTMLResponse(page("<div class='container'><div class='card'>Ce compte existe déjà.</div></div>", APP_TITLE), status_code=400)
 
-        # Connexion automatique
         resp = RedirectResponse("/properties", status_code=303)
         resp.set_cookie("uid", str(u.id), httponly=True, samesite="lax")
         return resp
 
     except Exception as e:
-        # Message d’erreur lisible coté UI (utile sur Render)
-        msg = f"<div class='container'><div class='card'>Erreur serveur pendant l’inscription.<br><small>{type(e).__name__}: {str(e)}</small></div></div>"
-        return HTMLResponse(page(msg, APP_TITLE), status_code=500)
+        # renvoie l’erreur à l’écran pour debug
+        return HTMLResponse(
+            page(f"<div class='container'><div class='card'>Erreur serveur pendant l’inscription.<br><small>{type(e).__name__}: {e}</small></div></div>", APP_TITLE),
+            status_code=500
+        )
     finally:
         db.close()
 
@@ -485,7 +472,6 @@ async def logout():
     resp = RedirectResponse("/", status_code=303)
     resp.delete_cookie("uid")
     return resp
-
 
 # --- Logements --------------------------------------------------------------
 @app.get("/properties", response_class=HTMLResponse)
