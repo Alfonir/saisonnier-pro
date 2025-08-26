@@ -212,14 +212,14 @@ input:focus, select:focus{ border-color:var(--accent); box-shadow:0 0 0 4px var(
 """
 
 def page(content: str, title: str = APP_TITLE, user: Optional[User] = None) -> HTMLResponse:
-    html = render_str(f"""
+    html = render_str("""
 <!doctype html>
 <html lang="fr">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>{{{{ title }}}}</title>
-    {BASE_HEAD}
+    <title>{{ title }}</title>
+    {{ head|safe }}
   </head>
   <body>
     <header class="headbar">
@@ -239,14 +239,14 @@ def page(content: str, title: str = APP_TITLE, user: Optional[User] = None) -> H
         </nav>
       </div>
     </header>
+
     <main style="padding:1rem 0;">
-      {content}
+      {{ content|safe }}
     </main>
   </body>
 </html>
-    """, title=title, user=user)
+    """, title=title, head=BASE_HEAD, content=content, user=user)
     return HTMLResponse(html)
-
 
 # ============================================================
 # Auth minimale (cookie 'uid')
