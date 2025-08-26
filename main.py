@@ -150,23 +150,26 @@ LAYOUT = """
     <title>{{ title }}</title>
   </head>
   <body class="bg-gray-50">
-    <header class="bg-white shadow sticky top-0 z-10">
-      <div class="max-w-6xl mx-auto py-4 px-4 flex items-center justify-between">
-        <a href="/" class="text-xl font-semibold" style="color:var(--primary)">{{ app_title }}</a>
-        <nav class="space-x-3 text-sm">
-          {% if user %}
-            <a class="badge" href="/properties">Logements</a>
-            <a class="badge" href="/calendar">Calendrier</a>
-            <a class="badge" href="/reservations">Réservations</a>
-            <a class="badge" href="/sync">Sync</a>
-            <a class="badge" href="/logout">Déconnexion</a>
-          {% else %}
-            <a class="badge" href="/login">Connexion</a>
-            <a class="badge" href="/signup">Créer un compte</a>
-          {% endif %}
-        </nav>
-      </div>
-    </header>
+    <header class="headbar sticky top-0 z-10">
+  <div class="container flex items-center justify-between py-3">
+    <a href="/" class="logo">
+      <span class="logo-mark"></span><span>{{ app_title }}</span>
+    </a>
+    <nav class="space-x-2 text-sm">
+      {% if user %}
+        <a class="badge" href="/properties">Logements</a>
+        <a class="badge" href="/calendar">Calendrier</a>
+        <a class="badge" href="/reservations">Réservations</a>
+        <a class="badge" href="/sync">Sync</a>
+        <a class="badge" href="/logout">Déconnexion</a>
+      {% else %}
+        <a class="badge" href="/login">Connexion</a>
+        <a class="badge" href="/signup">Créer un compte</a>
+      {% endif %}
+    </nav>
+  </div>
+</header>
+
     <main class="max-w-6xl mx-auto p-4">
       {{ content | safe }}
     </main>
