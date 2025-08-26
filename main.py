@@ -153,8 +153,8 @@ LAYOUT = """
     <header class="headbar sticky top-0 z-10">
   <div class="container flex items-center justify-between py-3">
     <a href="/" class="logo">
-      <span class="logo-mark"></span><span>{{ app_title }}</span>
-    </a>
+  <span class="logo-mark"></span><span>{{ app_title }}</span>
+</a>
     <nav class="space-x-2 text-sm">
       {% if user %}
         <a class="badge" href="/properties">Logements</a>
