@@ -623,3 +623,16 @@ async def schedule_sync_task():
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host="0.0.0.0", port=8000)
+
+# ----------------- Page error -----------------
+from fastapi.responses import PlainTextResponse
+
+@app.exception_handler(404)
+async def not_found(req, exc):
+    c = "<div class='container'><div class='card'>Page introuvable.</div></div>"
+    return HTMLResponse(page(c, APP_TITLE), status_code=404)
+
+@app.exception_handler(500)
+async def server_err(req, exc):
+    c = "<div class='container'><div class='card'>Une erreur est survenue. Réessaie dans un instant.</div></div>"
+    return HTMLResponse(page(c, APP_TITLE), status_code=500)
