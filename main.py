@@ -159,6 +159,16 @@ static_dir.mkdir(parents=True, exist_ok=True)
     "/static", StaticFiles(directory=str(static_dir)), name="static"
 )
 
+# --- Route de diagnostic ---
+@app.get("/_diag/init", response_class=HTMLResponse)
+def diag_init():
+    try:
+        Base.metadata.create_all(bind=engine)
+        msg = "Tables (re)créées."
+    except Exception as e:
+        msg = f"Erreur create_all: {type(e).__name__}: {e}"
+    return page(f"<div class='container'><div class='card'>{msg}</div></div>", "Init DB")
+    
 # Jinja minimal depuis string
 from jinja2 import Environment, select_autoescape
 env = Environment(autoescape=select_autoescape())
