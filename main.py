@@ -372,9 +372,14 @@ async def reservations_page(request: Request, property_id: Optional[int] = None,
     props = get_user_props(db, user.id)
     content = """
     <div class="flex items-center justify-between mb-4">
-      <h1 class="text-2xl font-semibold">Réservations</h1>
-      <a href="#" hx-get="/reservations/new" hx-target="#modal" class="btn btn-gold">Ajouter</a>
-    </div>
+  <h1 class="text-2xl font-semibold">Réservations</h1>
+  <div class="flex gap-2">
+    <a class="badge" href="/reservations.csv{% if request.query_params.get('property_id') %}?property_id={{ request.query_params.get('property_id') }}{% endif %}">
+      Exporter CSV
+    </a>
+    <a href="#" hx-get="/reservations/new" hx-target="#modal" class="btn btn-gold">Ajouter</a>
+  </div>
+</div>
     <form method="get" class="mb-3">
       <select name="property_id" class="border p-2 rounded" onchange="this.form.submit()">
         <option value="">Tous les logements</option>
