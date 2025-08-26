@@ -165,6 +165,55 @@ env = Environment(autoescape=select_autoescape())
 
 def render_str(html: str, **ctx) -> str:
     return env.from_string(html).render(**ctx)
+    
+from sqlalchemy import inspect
+import urllib.parse
+
+def _mask_db_url(url: str) -> str:
+    try:
+        u = urllib.parse.urlsplit(url)
+        # masque le mot de passe si présent
+        if "@" in u.netloc and ":" in u.netloc.split("@",1)[0]:
+            user_pwd, hostpart = u.netloc.split("@", 1)
+            user = user_pwd.split(":", 1)[0]
+            netloc = f"{user}:***@{hostpart}"
+        else:
+            netloc = u.netloc
+        return urllib.parse.urlunsplit((u.scheme, netloc, u.path, u.query, u.fragment))
+    except Exception:
+        return "<mask>"
+
+@app.get("/_diag/db", response_class=HTMLResponse)
+def diag_db():
+    from sqlalchemy.exc import OperationalError
+    info_lines = []
+    try:
+        masked = _mask_db_url(DB_URL)
+        info_lines.append(f"<li><b>DATABASE_URL</b>: {masked}</li>")
+        # ping
+        with engine.connect() as conn:
+            conn.execute(func.now().select())  # simple ping
+        ok = True
+    except Exception as e:
+        ok = False
+        info_lines.append(f"<li><b>Connexion</b>: ERREUR — {type(e).__name__}: {e}</li>")
+    # tables
+    try:
+        insp = inspect(engine)
+        tables = insp.get_table_names()
+        info_lines.append(f"<li><b>Tables</b>: {', '.join(tables) or '(aucune)'}")
+    except Exception as e:
+        info_lines.append(f"<li><b>Tables</b>: ERREUR — {type(e).__name__}: {e}</li>")
+    html = f"""
+    <div class="container"><div class="card">
+      <h2 class="text-xl font-semibold">Diag DB</h2>
+      <ul>{"".join(info_lines)}</ul>
+      <p style="margin-top:1rem">
+        <a class="badge" href="/_diag/init">Créer les tables</a>
+      </p>
+    </div></div>
+    """
+    return page(html, "Diag DB")
 
 # --- HEAD / Styles
 BASE_HEAD = """
