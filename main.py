@@ -23,7 +23,7 @@ from dateutil.relativedelta import relativedelta
 from ics import Calendar
 
 # ----------------- App config -----------------
-APP_TITLE = "Saisonnier Pro – MVP"
+APP_TITLE = "StayFlow — “Le cockpit de vos locations”"
 
 DB_URL_RAW = os.getenv("DATABASE_URL", "sqlite:///./saisonnier.db")
 
