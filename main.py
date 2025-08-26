@@ -23,6 +23,23 @@ from dateutil.relativedelta import relativedelta
 from ics import Calendar
 
 # ----------------- App config -----------------
+import re, httpx
+ICAL_RE = re.compile(r"^https?://.+\.ics(\?.*)?$", re.IGNORECASE)
+
+def validate_ical_url(url: str) -> bool:
+    if not url or not ICAL_RE.match(url):
+        return False
+    try:
+        # HEAD rapide (timeout court)
+        with httpx.Client(timeout=5) as c:
+            r = c.head(url, follow_redirects=True)
+            return r.status_code < 400
+    except Exception:
+        return False
+
+if ical_url and not validate_ical_url(ical_url):
+    return page("<div class='container'><div class='card'>URL iCal invalide. Vérifie le lien public .ics de ton annonce.</div></div>", APP_TITLE, user=user, status_code=400)
+
 APP_TITLE = "StayFlow — “Le cockpit de vos locations”"
 
 DB_URL_RAW = os.getenv("DATABASE_URL", "sqlite:///./saisonnier.db")
