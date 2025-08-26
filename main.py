@@ -135,25 +135,31 @@ BASE_HEAD = """
 *{ font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
 body{ background: linear-gradient(180deg,#f8fafc 0%, #f1f5f9 100%); color:#0f172a; }
 
-/* UI atoms */
 .btn{ display:inline-flex; align-items:center; gap:.5rem; padding:.7rem 1.1rem; border-radius:.9rem;
       background:var(--primary); color:#fff; font-weight:600; box-shadow:0 6px 20px rgba(2,6,23,.15); }
 .btn:hover{ filter:brightness(1.06); transform: translateY(-1px); transition:.2s; }
 .btn-accent{ background:var(--accent); color:#06253A; }
 .badge{ background:#eef2ff; color:#0b1b36; padding:.35rem .7rem; border-radius:.6rem; font-weight:500; }
 .card{ background:#fff; border-radius:1.25rem; box-shadow:0 20px 40px rgba(2,6,23,.08); padding:1.25rem; }
-
-/* Inputs */
-input, select{ border:1px solid #e2e8f0; padding:.65rem .8rem; border-radius:.8rem; outline:0; width:100%; }
-input:focus, select:focus{ border-color:var(--accent); box-shadow:0 0 0 4px var(--ring); }
-
-/* Layout helpers */
 .container{ max-width:1120px; margin:0 auto; padding:1rem; }
 .headbar{ backdrop-filter:saturate(180%) blur(8px); background:rgba(255,255,255,.82); border-bottom:1px solid #eef2f7; }
 .logo{ display:flex; align-items:center; gap:.6rem; font-weight:700; letter-spacing:.2px; }
 .logo-mark{ width:28px; height:28px; border-radius:.7rem; background:linear-gradient(135deg,var(--accent),#60a5fa); box-shadow:0 6px 20px rgba(6,182,212,.35) }
 .hero{ display:grid; grid-template-columns:1.1fr .9fr; gap:1.25rem; align-items:stretch; }
 .cta-stack{ margin-top:auto; }
+input, select{ border:1px solid #e2e8f0; padding:.65rem .8rem; border-radius:.8rem; outline:0; width:100%; }
+input:focus, select:focus{ border-color:var(--accent); box-shadow:0 0 0 4px var(--ring); }
+.text-gray-600{ color:#64748b; }
+.text-xl{ font-size:1.25rem; }
+.text-3xl{ font-size:1.875rem; }
+.text-4xl{ font-size:2.25rem; }
+.font-semibold{ font-weight:600; }
+.mb-2{ margin-bottom:.5rem; }
+.mt-6{ margin-top:1.5rem; }
+.flex{ display:flex; }
+.items-center{ align-items:center; }
+.justify-between{ justify-content:space-between; }
+.mb-3{ margin-bottom:.75rem; }
 </style>
 """
 
