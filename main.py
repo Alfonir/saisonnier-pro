@@ -401,7 +401,8 @@ async def reservations_page(request: Request, property_id: Optional[int] = None,
 async def reservation_new_modal(request: Request, db: Session = Depends(get_db), user: Optional[User] = Depends(current_user)):
     if not user: return RedirectResponse("/login", status_code=302)
     props = get_user_props(db, user.id)
-    options = "".join([f"<option value='{p.id}'>{p.title}</option>" for p in props])
+    # on met le prix/nuit dans data-price
+    options = "".join([f"<option value='{p.id}' data-price='{p.base_price}'>{p.title} — {p.base_price:.2f} €/nuit</option>" for p in props])
     return HTMLResponse(f"""
     <div class="card max-w-xl mx-auto">
       <form method="post" action="/reservations" class="grid grid-cols-2 gap-3">
@@ -409,10 +410,26 @@ async def reservation_new_modal(request: Request, db: Session = Depends(get_db),
         <input name="guest_name" placeholder="Nom voyageur" class="border p-2 rounded col-span-2" required>
         <input type="date" name="start_date" class="border p-2 rounded" required>
         <input type="date" name="end_date" class="border p-2 rounded" required>
-        <input name="total_price" placeholder="Total (€)" class="border p-2 rounded">
+        <input id="total_price" name="total_price" placeholder="Total (€)" class="border p-2 rounded">
         <button class="btn col-span-2">Enregistrer</button>
       </form>
     </div>
+    <script>
+    function calc() {{
+      const sel = document.querySelector("select[name='property_id']");
+      const price = parseFloat(sel.selectedOptions[0]?.dataset.price || 0);
+      const s = new Date(document.querySelector("input[name='start_date']").value);
+      const e = new Date(document.querySelector("input[name='end_date']").value);
+      if (!price || isNaN(s) || isNaN(e)) return;
+      const nights = Math.max(0, Math.round((e - s) / (1000*60*60*24)));
+      document.getElementById("total_price").value = (nights * price).toFixed(2);
+    }}
+    ["change","input"].forEach(ev => {{
+      document.querySelector("select[name='property_id']").addEventListener(ev, calc);
+      document.querySelector("input[name='start_date']").addEventListener(ev, calc);
+      document.querySelector("input[name='end_date']").addEventListener(ev, calc);
+    }});
+    </script>
     """)
 
 @app.post("/reservations")
