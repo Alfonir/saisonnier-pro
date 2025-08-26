@@ -23,14 +23,16 @@ from dateutil.relativedelta import relativedelta
 from ics import Calendar
 
 # ----------------- App config -----------------
-import re, httpx
+import re
+import httpx
+
 ICAL_RE = re.compile(r"^https?://.+\.ics(\?.*)?$", re.IGNORECASE)
 
 def validate_ical_url(url: str) -> bool:
+    """Return True if url looks like a public .ics and responds < 400."""
     if not url or not ICAL_RE.match(url):
         return False
     try:
-        # HEAD rapide (timeout court)
         with httpx.Client(timeout=5) as c:
             r = c.head(url, follow_redirects=True)
             return r.status_code < 400
