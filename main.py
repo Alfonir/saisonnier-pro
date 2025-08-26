@@ -106,7 +106,7 @@ BASE_HEAD = """
 <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 <script src="https://unpkg.com/htmx.org@1.9.12"></script>
 <style>
-:root{--primary:#0B1B36;--gold:#C9A959}
+:root{--primary:#0f172a;--gold:#06b6d4}
 .btn{background:var(--primary);color:#fff;padding:.55rem 1rem;border-radius:.6rem}
 .btn-gold{background:var(--gold);color:#0B1B36}
 .card{background:white;border-radius:1rem;box-shadow:0 10px 25px rgba(0,0,0,.06);padding:1.25rem}
