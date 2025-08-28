@@ -1007,6 +1007,69 @@ async def reservation_edit_post(res_id: int, request: Request, user: "User" = De
 
     return RedirectResponse("/reservations", status_code=303)
 
+# --- Suppression d'une réservation : confirmation (GET) ---------------------
+@app.get("/reservations/{res_id}/delete", response_class=HTMLResponse)
+async def reservation_delete_confirm(res_id: int, user: "User" = Depends(current_user)):
+    db = SessionLocal()
+    try:
+        res = (
+            db.query(Reservation)
+            .join(Property, Reservation.property_id == Property.id)
+            .filter(Reservation.id == res_id, Property.owner_id == user.id)
+            .first()
+        )
+        if not res:
+            return HTMLResponse(
+                page("<div class='container'><div class='card'>Réservation introuvable.</div></div>", APP_TITLE, user=user),
+                status_code=404,
+            )
+
+        prop_title = getattr(res.property, "title", "")
+        content = f"""
+        <div class="container">
+          <div class="card">
+            <h2 class="text-xl font-semibold mb-2">Supprimer la réservation</h2>
+            <p class="text-gray-600">
+              Logement : <b>{prop_title}</b><br>
+              Voyageur : <b>{res.guest_name or '–'}</b><br>
+              Séjour : <b>{res.start_date} → {res.end_date}</b> ({res.nights} nuits)
+            </p>
+            <form method="post" action="/reservations/{res.id}/delete">
+              <button class="btn" style="background:#ef4444">Oui, supprimer</button>
+              <a class="badge" href="/reservations">Annuler</a>
+            </form>
+          </div>
+        </div>
+        """
+        return page(content, APP_TITLE, user=user)
+    finally:
+        db.close()
+
+
+# --- Suppression d'une réservation : exécution (POST) ----------------------
+@app.post("/reservations/{res_id}/delete")
+async def reservation_delete(res_id: int, user: "User" = Depends(current_user)):
+    db = SessionLocal()
+    try:
+        res = (
+            db.query(Reservation)
+            .join(Property, Reservation.property_id == Property.id)
+            .filter(Reservation.id == res_id, Property.owner_id == user.id)
+            .first()
+        )
+        if not res:
+            return HTMLResponse(
+                page("<div class='container'><div class='card'>Réservation introuvable.</div></div>", APP_TITLE, user=user),
+                status_code=404,
+            )
+
+        db.delete(res)
+        db.commit()
+    finally:
+        db.close()
+
+    return RedirectResponse("/reservations", status_code=303)
+
 # --- Sync iCal --------------------------------------------------------------
 @app.get("/sync")
 async def sync_all(user: User = Depends(current_user), db: Session = Depends(get_db)):
