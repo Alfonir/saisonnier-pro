@@ -689,11 +689,15 @@ async def reservations_page(request: Request, user: User = Depends(current_user)
     listing = "<ul>" + "\n".join(items) + "</ul>" if items else "<div class='text-gray-600'>Aucune réservation.</div>"
 
     header = """
-    <div class="flex items-center justify-between mb-3">
-      <h2 class="text-xl font-semibold">Réservations</h2>
-      <a class="badge" href="/reservations.csv" download>Exporter CSV</a>
-    </div>
-    """
+<div class="flex items-center justify-between mb-3">
+  <h2 class="text-xl font-semibold">Réservations</h2>
+  <div class="flex" style="gap:.5rem">
+    <a class="badge" href="/reservations/new">Ajouter</a>
+    <a class="badge" href="/reservations.csv" download>Exporter CSV</a>
+  </div>
+</div>
+"""
+
     content = f"""
     <div class="container">
       <div class="card">
