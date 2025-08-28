@@ -97,14 +97,12 @@ Base = declarative_base()
 def hash_password(pw: str) -> str:
     return hashlib.sha256(pw.encode("utf-8")).hexdigest()
 
-
 def get_db() -> Session:
     db = SessionLocal()
     try:
         yield db
     finally:
         db.close()
-
 
 # --- Validation URL iCal ---------------------------------------------------
 ICAL_RE = re.compile(r"^https?://.+\.ics(\?.*)?$", re.IGNORECASE)
@@ -119,6 +117,18 @@ def validate_ical_url(url: str) -> bool:
     except Exception:
         return False
 
+# --- Reservation helpers (dates & overlaps) -------------------------------
+def parse_date(s: str) -> date | None:
+    if not s:
+        return None
+    try:
+        return dparse(s).date()
+    except Exception:
+        return None
+
+def overlaps(a_start: date, a_end: date, b_start: date, b_end: date) -> bool:
+    # intervalle [start, end) — fin exclusive
+    return a_start < b_end and b_start < a_end
 
 # ============================================================
 # Modèles SQLAlchemy
