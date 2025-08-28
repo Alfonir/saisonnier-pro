@@ -998,7 +998,8 @@ async def reservation_edit_post(res_id: int, request: Request, user: "User" = De
         res.guest_name  = guest
         res.start_date  = sd_dt
         res.end_date    = ed_dt
-        res.nights      = (ed_dt - sd_dt).days
+        if hasattr(res, "nights"):
+        res.nights = (ed_dt - sd_dt).days
         res.total_price = float(price_in) if price_in not in (None, "") else None
 
         db.commit()
