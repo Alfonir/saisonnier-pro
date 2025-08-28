@@ -942,7 +942,6 @@ async def reservation_edit_form(res_id: int, user: "User" = Depends(current_user
     finally:
         db.close()
 
-
 # --- Édition d'une réservation : enregistrement (POST) ----------------------
 @app.post("/reservations/{res_id}/edit")
 async def reservation_edit_post(res_id: int, request: Request, user: "User" = Depends(current_user)):
@@ -994,12 +993,12 @@ async def reservation_edit_post(res_id: int, request: Request, user: "User" = De
                 status_code=400,
             )
 
+        # Mise à jour des champs
         res.property_id = prop.id
         res.guest_name  = guest
         res.start_date  = sd_dt
         res.end_date    = ed_dt
-        if hasattr(res, "nights"):
-        res.nights = (ed_dt - sd_dt).days
+        res.nights      = (ed_dt - sd_dt).days  # <-- bien aligné ici !
         res.total_price = float(price_in) if price_in not in (None, "") else None
 
         db.commit()
