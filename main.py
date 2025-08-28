@@ -683,10 +683,17 @@ async def reservations_page(request: Request, user: User = Depends(current_user)
         .order_by(Reservation.start_date.desc())
         .all()
     )
+  
     items = []
-    for r in rows:
-        items.append(f"<li>{getattr(r.property,'title','')} — {r.guest_name} — {r.start_date} → {r.end_date} — {int((r.end_date - r.start_date).days)} nuits</li>")
-    listing = "<ul>" + "\n".join(items) + "</ul>" if items else "<div class='text-gray-600'>Aucune réservation.</div>"
+for r in rows:
+    items.append(
+        f"<li>{r.guest_name or '–'} — {r.start_date} → {r.end_date} "
+        f"({r.nights} nuits) — <small>{r.property.title}</small> "
+        f"<a class='badge' href='/reservations/{r.id}/edit'>Modifier</a>"
+        f"</li>"
+    )
+
+listing = "<ul>" + "\n".join(items) + "</ul>" if items else "<div class='text-gray-600'>Aucune réservation.</div>"
 
     header = """
 <div class="flex items-center justify-between mb-3">
