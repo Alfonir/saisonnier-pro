@@ -179,6 +179,12 @@ class Reservation(Base):
 
 Base.metadata.create_all(bind=engine)
 
+# --- Ownership helper ------------------------------------------------------
+def get_owned_property(db, user_id: int, prop_id: int) -> "Property | None":
+    return db.query(Property).filter(
+        Property.id == prop_id,
+        Property.owner_id == user_id   # si tu as Column("user_id", ...) garde .owner_id ici
+    ).first()
 
 # ============================================================
 # App / templating
