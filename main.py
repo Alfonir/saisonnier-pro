@@ -476,17 +476,43 @@ async def login_get(request: Request, user: Optional[User] = Depends(current_use
 @app.post("/login")
 async def login_post(
     request: Request,
-    email: EmailStr = Form(...),
+    email: str = Form(...),
     password: str = Form(...)
 ):
+    email_clean = (email or "").strip().lower()
+    pwd = (password or "").strip()
+
+    if not email_clean or not pwd:
+        return HTMLResponse(
+            page("<div class='container'><div class='card'>Email et mot de passe requis.</div></div>", APP_TITLE),
+            status_code=400,
+        )
+
     db = SessionLocal()
     try:
-        u = db.query(User).filter(User.email == str(email).lower()).first()
-        if not u or u.password != hash_password(password):
-            return HTMLResponse(page("<div class='container'><div class='card'>Identifiants invalides.</div></div>", APP_TITLE), status_code=400)
-        resp = RedirectResponse("/properties", status_code=303)
-        resp.set_cookie("uid", str(u.id), httponly=True, samesite="lax")
-        return resp
+        # lookup insensible à la casse
+        user = db.query(User).filter(func.lower(User.email) == email_clean).first()
+        if not user:
+            return HTMLResponse(
+                page("<div class='container'><div class='card'>Identifiants invalides.</div></div>", APP_TITLE),
+                status_code=400,
+            )
+
+        # vérif compat (hash/legacy) + migration éventuelle vers hash
+        if verify_password(pwd, user.password):
+            if not looks_like_sha256(user.password):
+                user.password = hash_password(pwd)
+                db.commit()
+
+            resp = RedirectResponse("/properties", status_code=303)
+            resp.set_cookie("uid", str(user.id), httponly=True, samesite="lax")
+            return resp
+
+        return HTMLResponse(
+            page("<div class='container'><div class='card'>Identifiants invalides.</div></div>", APP_TITLE),
+            status_code=400,
+        )
+
     finally:
         db.close()
 
