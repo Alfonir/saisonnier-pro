@@ -192,6 +192,12 @@ def get_owned_property(db, user_id: int, prop_id: int) -> "Property | None":
 
 app = FastAPI(title=APP_TITLE)
 
+from starlette.responses import Response
+
+@app.head("/")
+def head_root():
+    return Response(status_code=200)
+
 # static (évite l’erreur si dossier absent)
 static_dir = Path(__file__).parent / "static"
 static_dir.mkdir(parents=True, exist_ok=True)
