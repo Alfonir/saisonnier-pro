@@ -729,6 +729,120 @@ async def reservations_page(request: Request, user: "User" = Depends(current_use
     finally:
         db.close()
 
+# --- Création d'une réservation : formulaire (GET) --------------------------
+@app.get("/reservations/new", response_class=HTMLResponse)
+async def reservation_new_form(user: "User" = Depends(current_user)):
+    db = SessionLocal()
+    try:
+        # Liste des logements de l'utilisateur pour le select
+        props = (
+            db.query(Property)
+              .filter(Property.owner_id == user.id)
+              .order_by(Property.title)
+              .all()
+        )
+        if not props:
+            content = "<div class='container'><div class='card'>Crée d'abord un logement pour pouvoir ajouter une réservation.</div></div>"
+            return page(content, APP_TITLE, user=user)
+
+        options = "".join(f"<option value='{p.id}'>{p.title}</option>" for p in props)
+
+        today = date.today().isoformat()
+        tomorrow = (date.today() + timedelta(days=1)).isoformat()
+
+        content = f"""
+        <div class="container">
+          <div class="card">
+            <h2 class="text-xl font-semibold mb-2">Ajouter une réservation</h2>
+            <form method="post" action="/reservations/new">
+              <div class="mb-2">
+                <label>Logement</label>
+                <select name="property_id">{options}</select>
+              </div>
+              <div class="mb-2">
+                <label>Nom du client</label>
+                <input name="guest_name" placeholder="Nom du voyageur">
+              </div>
+              <div class="mb-2">
+                <label>Début</label>
+                <input type="date" name="start_date" value="{today}">
+              </div>
+              <div class="mb-2">
+                <label>Fin</label>
+                <input type="date" name="end_date" value="{tomorrow}">
+              </div>
+              <div class="mb-2">
+                <label>Prix total</label>
+                <input type="number" step="0.01" name="total_price" placeholder="Facultatif">
+              </div>
+              <div class="mt-6">
+                <button class="btn btn-accent" type="submit">Enregistrer</button>
+                <a class="badge" href="/reservations">Annuler</a>
+              </div>
+            </form>
+          </div>
+        </div>
+        """
+        return page(content, APP_TITLE, user=user)
+    finally:
+        db.close()
+
+
+# --- Création d'une réservation : enregistrement (POST) --------------------
+@app.post("/reservations/new")
+async def reservation_new_post(request: Request, user: "User" = Depends(current_user)):
+    form = await request.form()
+    prop_id  = int(form.get("property_id") or 0)
+    guest    = (form.get("guest_name") or "").strip()
+    sd       = (form.get("start_date") or "").strip()
+    ed       = (form.get("end_date")   or "").strip()
+    price_in = form.get("total_price")
+
+    # Validation basique des dates
+    try:
+        sd_dt = date.fromisoformat(sd)
+        ed_dt = date.fromisoformat(ed)
+    except Exception:
+        return HTMLResponse(
+            page("<div class='container'><div class='card'>Dates invalides.</div></div>", APP_TITLE, user=user),
+            status_code=400,
+        )
+    if ed_dt <= sd_dt:
+        return HTMLResponse(
+            page("<div class='container'><div class='card'>La date de fin doit être après la date de début.</div></div>", APP_TITLE, user=user),
+            status_code=400,
+        )
+
+    db = SessionLocal()
+    try:
+        # Vérifie que le logement appartient bien à l'utilisateur
+        prop = (
+            db.query(Property)
+              .filter(Property.id == prop_id, Property.owner_id == user.id)
+              .first()
+        )
+        if not prop:
+            return HTMLResponse(
+                page("<div class='container'><div class='card'>Logement invalide.</div></div>", APP_TITLE, user=user),
+                status_code=400,
+            )
+
+        res = Reservation(
+            property_id = prop.id,
+            guest_name  = guest,
+            start_date  = sd_dt,
+            end_date    = ed_dt,
+            nights      = (ed_dt - sd_dt).days,
+            total_price = float(price_in) if price_in not in (None, "") else None,
+            source      = "manual",
+        )
+        db.add(res)
+        db.commit()
+    finally:
+        db.close()
+
+    return RedirectResponse("/reservations", status_code=303)
+
 @app.get("/reservations.csv")
 async def reservations_csv(user: User = Depends(current_user), db: Session = Depends(get_db)):
     if not user:
