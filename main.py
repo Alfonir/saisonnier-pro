@@ -141,7 +141,7 @@ class Property(Base):
     id = Column(Integer, primary_key=True)
     title = Column(String, nullable=False)
     ical_url = Column(String, default="")
-    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    owner_id = Column("user_id", Integer, ForeignKey("users.id"), index=True, nullable=False)
 
     owner = relationship("User", back_populates="properties")
     reservations = relationship("Reservation", back_populates="property", cascade="all, delete-orphan")
