@@ -270,8 +270,9 @@ input:focus, select:focus{ border-color:var(--accent); box-shadow:0 0 0 4px var(
 </style>
 """
 
-def page(content: str, title: str = APP_TITLE, user: Optional[User] = None) -> HTMLResponse:
-    html = render_str("""
+def page(content: str, title: str = APP_TITLE, user: Optional[User] = None) -> str:
+    # NE RENVOIE PLUS HTMLResponse ICI — juste la chaîne HTML !
+    return render_str("""
 <!doctype html>
 <html lang="fr">
   <head>
@@ -305,7 +306,6 @@ def page(content: str, title: str = APP_TITLE, user: Optional[User] = None) -> H
   </body>
 </html>
     """, title=title, head=BASE_HEAD, content=content, user=user)
-    return HTMLResponse(html)
 
 # ============================================================
 # Auth minimale (cookie 'uid')
