@@ -672,48 +672,56 @@ async def properties_delete(prop_id: int, user: User = Depends(current_user), db
 
 
 # --- Réservations -----------------------------------------------------------
+from fastapi.responses import HTMLResponse
+
 @app.get("/reservations", response_class=HTMLResponse)
-async def reservations_page(request: Request, user: User = Depends(current_user), db: Session = Depends(get_db)):
-    if not user:
-        return RedirectResponse("/login", status_code=303)
-    rows = (
-        db.query(Reservation)
-        .join(Property, Reservation.property_id == Property.id)
-        .filter(Property.owner_id == user.id)
-        .order_by(Reservation.start_date.desc())
-        .all()
-    )
-  
-    items = []
-for r in rows:
-    items.append(
-        f"<li>{r.guest_name or '–'} — {r.start_date} → {r.end_date} "
-        f"({r.nights} nuits) — <small>{r.property.title}</small> "
-        f"<a class='badge' href='/reservations/{r.id}/edit'>Modifier</a>"
-        f"</li>"
-    )
+async def reservations_page(request: Request, user: "User" = Depends(current_user)):
+    db = SessionLocal()
+    try:
+        rows = (
+            db.query(Reservation)
+            .join(Property, Reservation.property_id == Property.id)
+            .filter(Property.owner_id == user.id)
+            .order_by(Reservation.start_date.desc())
+            .all()
+        )
 
-listing = "<ul>" + "\n".join(items) + "</ul>" if items else "<div class='text-gray-600'>Aucune réservation.</div>"
+        # En-tête avec "Ajouter" + "Exporter CSV"
+        header = """
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-xl font-semibold">Réservations</h2>
+          <div class="flex" style="gap:.5rem">
+            <a class="badge" href="/reservations/new">Ajouter</a>
+            <a class="badge" href="/reservations.csv" download>Exporter CSV</a>
+          </div>
+        </div>
+        """
 
-    header = """
-<div class="flex items-center justify-between mb-3">
-  <h2 class="text-xl font-semibold">Réservations</h2>
-  <div class="flex" style="gap:.5rem">
-    <a class="badge" href="/reservations/new">Ajouter</a>
-    <a class="badge" href="/reservations.csv" download>Exporter CSV</a>
-  </div>
-</div>
-"""
+        # Liste avec bouton "Modifier" par réservation
+        items = []
+        for r in rows:
+            nights = (r.end_date - r.start_date).days if r.end_date and r.start_date else ""
+            prop_title = getattr(r.property, "title", "")
+            items.append(
+                f"<li>{r.guest_name or '–'} — {r.start_date} → {r.end_date} "
+                f"({nights} nuits) — <small>{prop_title}</small> "
+                f"<a class='badge' href='/reservations/{r.id}/edit'>Modifier</a>"
+                f"</li>"
+            )
 
-    content = f"""
-    <div class="container">
-      <div class="card">
-        {header}
-        {listing}
-      </div>
-    </div>
-    """
-    return page(content, APP_TITLE, user=user)
+        listing = "<ul>" + "\n".join(items) + "</ul>" if items else "<div class='text-gray-600'>Aucune réservation.</div>"
+
+        content = f"""
+        <div class="container">
+          <div class="card">
+            {header}
+            {listing}
+          </div>
+        </div>
+        """
+        return page(content, APP_TITLE, user=user)
+    finally:
+        db.close()
 
 @app.get("/reservations.csv")
 async def reservations_csv(user: User = Depends(current_user), db: Session = Depends(get_db)):
