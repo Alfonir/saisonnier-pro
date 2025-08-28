@@ -761,6 +761,136 @@ async def reservations_csv(user: User = Depends(current_user), db: Session = Dep
         headers={"Content-Disposition": 'attachment; filename="reservations.csv"'}
     )
 
+# --- Édition d'une réservation : formulaire (GET) ---------------------------
+@app.get("/reservations/{res_id}/edit", response_class=HTMLResponse)
+async def reservation_edit_form(res_id: int, user: "User" = Depends(current_user)):
+    db = SessionLocal()
+    try:
+        res = (
+            db.query(Reservation)
+            .join(Property, Reservation.property_id == Property.id)
+            .filter(Reservation.id == res_id, Property.owner_id == user.id)
+            .first()
+        )
+        if not res:
+            return HTMLResponse(
+                page("<div class='container'><div class='card'>Réservation introuvable.</div></div>", APP_TITLE, user=user),
+                status_code=404,
+            )
+
+        # Logements de l'utilisateur pour le select
+        props = (
+            db.query(Property)
+            .filter(Property.owner_id == user.id)
+            .order_by(Property.title)
+            .all()
+        )
+        options = "".join(
+            f"<option value='{p.id}' {'selected' if p.id == res.property_id else ''}>{p.title}</option>"
+            for p in props
+        )
+
+        content = f"""
+        <div class="container">
+          <div class="card">
+            <h2 class="text-xl font-semibold mb-2">Modifier la réservation</h2>
+            <form method="post" action="/reservations/{res.id}/edit">
+              <div class="mb-2">
+                <label>Logement</label>
+                <select name="property_id">{options}</select>
+              </div>
+              <div class="mb-2">
+                <label>Nom du client</label>
+                <input name="guest_name" value="{(res.guest_name or '').replace('"','&quot;')}">
+              </div>
+              <div class="mb-2">
+                <label>Début</label>
+                <input type="date" name="start_date" value="{res.start_date}">
+              </div>
+              <div class="mb-2">
+                <label>Fin</label>
+                <input type="date" name="end_date" value="{res.end_date}">
+              </div>
+              <div class="mb-2">
+                <label>Prix total</label>
+                <input type="number" step="0.01" name="total_price" value="{res.total_price if res.total_price is not None else ''}">
+              </div>
+              <div class="mt-6">
+                <button class="btn btn-accent" type="submit">Enregistrer</button>
+                <a class="badge" href="/reservations">Annuler</a>
+              </div>
+            </form>
+          </div>
+        </div>
+        """
+        return page(content, APP_TITLE, user=user)
+    finally:
+        db.close()
+
+
+# --- Édition d'une réservation : enregistrement (POST) ----------------------
+@app.post("/reservations/{res_id}/edit")
+async def reservation_edit_post(res_id: int, request: Request, user: "User" = Depends(current_user)):
+    form = await request.form()
+    prop_id  = int(form.get("property_id") or 0)
+    guest    = (form.get("guest_name") or "").strip()
+    sd       = (form.get("start_date") or "").strip()
+    ed       = (form.get("end_date")   or "").strip()
+    price_in = form.get("total_price")
+
+    from datetime import date
+    try:
+        sd_dt = date.fromisoformat(sd)
+        ed_dt = date.fromisoformat(ed)
+    except Exception:
+        return HTMLResponse(
+            page("<div class='container'><div class='card'>Dates invalides.</div></div>", APP_TITLE, user=user),
+            status_code=400,
+        )
+    if ed_dt <= sd_dt:
+        return HTMLResponse(
+            page("<div class='container'><div class='card'>La date de fin doit être après la date de début.</div></div>", APP_TITLE, user=user),
+            status_code=400,
+        )
+
+    db = SessionLocal()
+    try:
+        res = (
+            db.query(Reservation)
+            .join(Property, Reservation.property_id == Property.id)
+            .filter(Reservation.id == res_id, Property.owner_id == user.id)
+            .first()
+        )
+        if not res:
+            return HTMLResponse(
+                page("<div class='container'><div class='card'>Réservation introuvable.</div></div>", APP_TITLE, user=user),
+                status_code=404,
+            )
+
+        # Vérifie que le logement cible appartient bien à l'utilisateur
+        prop = (
+            db.query(Property)
+            .filter(Property.id == prop_id, Property.owner_id == user.id)
+            .first()
+        )
+        if not prop:
+            return HTMLResponse(
+                page("<div class='container'><div class='card'>Logement invalide.</div></div>", APP_TITLE, user=user),
+                status_code=400,
+            )
+
+        res.property_id = prop.id
+        res.guest_name  = guest
+        res.start_date  = sd_dt
+        res.end_date    = ed_dt
+        res.nights      = (ed_dt - sd_dt).days
+        res.total_price = float(price_in) if price_in not in (None, "") else None
+
+        db.commit()
+    finally:
+        db.close()
+
+    return RedirectResponse("/reservations", status_code=303)
 
 # --- Sync iCal --------------------------------------------------------------
 @app.get("/sync")
