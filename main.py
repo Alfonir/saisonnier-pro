@@ -475,12 +475,11 @@ async def signup_post(
         return HTMLResponse(page("<div class='container'><div class='card'>Mot de passe requis.</div></div>", APP_TITLE), status_code=400)
 
     db = SessionLocal()
-    try:
         # force la création des tables si besoin
     try:
-            db.execute(text("SELECT 1 FROM users LIMIT 1"))
-        except (OperationalError, ProgrammingError):
-            Base.metadata.create_all(bind=engine)
+        db.execute(text("SELECT 1 FROM users LIMIT 1"))
+    except (OperationalError, ProgrammingError):
+        Base.metadata.create_all(bind=engine)
 
         exists = db.query(User).filter(User.email == email_clean).first()
         if exists:
