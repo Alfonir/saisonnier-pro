@@ -184,9 +184,6 @@ class Reservation(Base):
 
     property = relationship("Property", back_populates="reservations")
 
-
-Base.metadata.create_all(bind=engine)
-
 # --- Ownership helper ------------------------------------------------------
 def get_owned_property(db, user_id: int, prop_id: int) -> "Property | None":
     return db.query(Property).filter(
