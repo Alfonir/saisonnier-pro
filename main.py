@@ -36,6 +36,7 @@ import hashlib, secrets, string
 from sqlalchemy import func
 
 import html
+from textwrap import dedent
 
 def esc(s: str | None) -> str:
     """Échappe &, <, > et " pour un usage sûr dans value=""."""
