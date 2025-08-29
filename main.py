@@ -104,9 +104,6 @@ Base = declarative_base()
 # Utilitaires
 # ============================================================
 
-def hash_password(pw: str) -> str:
-    return hashlib.sha256(pw.encode("utf-8")).hexdigest()
-
 def get_db() -> Session:
     db = SessionLocal()
     try:
