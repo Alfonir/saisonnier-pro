@@ -337,55 +337,50 @@ input:focus, select:focus{ border-color:var(--accent); box-shadow:0 0 0 4px var(
 """
 
 def page(content: str, title: str = APP_TITLE, user: Optional[User] = None) -> str:
-    # Renvoie une chaîne HTML (pas d'HTMLResponse ici)
-    return render_str(f"""<!doctype html>
-<html lang="fr" class="no-js" data-theme="light">
+    # Rend juste une chaîne HTML (les routes renverront HTMLResponse(page(...)))
+    return render_str(f"""
+<!doctype html>
+<html lang="fr">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>{{{{ APP_NAME }}}} — {{{{ APP_TAGLINE }}}}</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
-  <style>
-    /* … (garde tout ton CSS tel quel) … */
-  </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{title}</title>
+  {BASE_HEAD}
 </head>
 <body>
-<header class="headbar">
-  <div class="container" style="display:flex;align-items:center;justify-content:space-between;padding:.8rem 0;">
-    <div class="logo">
-      <span class="logo-mark"></span>
-      <div>
-        <div style="font-size:1.05rem;font-weight:800">{{{{ APP_NAME }}}}</div>
-        <div style="font-size:.78rem;color:var(--muted);margin-top:-2px">{{{{ APP_TAGLINE }}}}</div>
+  <header class="headbar">
+    <div class="container" style="display:flex;align-items:center;justify-content:space-between;padding:.8rem 0;">
+      <div class="logo">
+        <span class="logo-mark"></span>
+        <div>
+          <div style="font-size:1.05rem;font-weight:800">{APP_NAME}</div>
+          <div style="font-size:.78rem;color:#64748b;margin-top:-2px">{APP_TAGLINE}</div>
+        </div>
       </div>
+
+      <nav>
+        <a class="pill {{% if active=='properties' %}}active{{% endif %}}" href="/properties">Logements</a>
+        <a class="pill {{% if active=='calendar' %}}active{{% endif %}}" href="/calendar">Calendrier</a>
+        <a class="pill {{% if active=='reservations' %}}active{{% endif %}}" href="/reservations">Réservations</a>
+        <a class="pill {{% if active=='sync' %}}active{{% endif %}}" href="/sync">Sync</a>
+        {{% if user %}}
+          <a class="pill" href="/logout">Déconnexion</a>
+        {{% else %}}
+          <a class="pill" href="/login">Connexion</a>
+          <a class="pill" href="/signup">Créer un compte</a>
+        {{% endif %}}
+      </nav>
     </div>
+  </header>
 
-    <nav>
-      <a class="pill {{% if active=='properties' %}}active{{% endif %}}" href="/properties">Logements</a>
-      <a class="pill {{% if active=='calendar' %}}active{{% endif %}}" href="/calendar">Calendrier</a>
-      <a class="pill {{% if active=='reservations' %}}active{{% endif %}}" href="/reservations">Réservations</a>
-      <a class="pill {{% if active=='sync' %}}active{{% endif %}}" href="/sync">Sync</a>
-      {{% if user %}}
-        <a class="pill" href="/logout">Déconnexion</a>
-      {{% else %}}
-        <a class="pill" href="/login">Connexion</a>
-        <a class="pill" href="/signup">Créer un compte</a>
-      {{% endif %}}
-      <div class="mode">
-        <div id="themeToggle" class="toggle"><div class="thumb"></div></div>
-      </div>
-    </nav>
-  </div>
-</header>
+  <div class="spacer"></div>
 
-<div class="spacer"></div>
-
-{content}
-
+  <main class="container">
+    {content}
+  </main>
 </body>
-</html>""", active="", user=user)
+</html>
+""", user=user)
 
 # ============================================================
 # Auth minimale (cookie 'uid')
