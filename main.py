@@ -34,6 +34,7 @@ from dateutil.parser import parse as dparse
 
 import hashlib, secrets, string
 from sqlalchemy import func
+from sqlalchemy import text
 
 import html
 from textwrap import dedent
