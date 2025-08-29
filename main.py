@@ -200,6 +200,14 @@ def get_owned_property(db, user_id: int, prop_id: int) -> "Property | None":
 
 app = FastAPI(title=APP_TITLE)
 
+# --- Init DB au démarrage ---
+@app.on_event("startup")
+def _init_db():
+    try:
+        Base.metadata.create_all(bind=engine)
+    except Exception:
+        pass
+
 from fastapi.templating import Jinja2Templates
 
 templates = Jinja2Templates(directory="templates")
