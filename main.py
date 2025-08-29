@@ -342,7 +342,9 @@ input:focus, select:focus{ border-color:var(--accent); box-shadow:0 0 0 4px var(
 </style>
 """
 
-def page(content: str, title: str = APP_TITLE, user: Optional[User] = None) -> str:
+def page(content: str, title: str = APP_TITLE, user: Optional[User] = None, active: str = "") -> str:
+    return render_str(""" ... (ta grosse template HTML) ... """,
+                      user=user, active=active, content=content, title=title)
     # Rend juste une chaîne HTML (les routes renverront HTMLResponse(page(...)))
     return render_str(f"""
 <!doctype html>
