@@ -535,13 +535,15 @@ async def login_get(request: Request, user: Optional[User] = Depends(current_use
     <div class="container">
       <div class="card" style="max-width:480px; margin:0 auto;">
         <h2 class="text-xl font-semibold mb-2">Connexion</h2>
-        <form method="post" action="/login">
-          <label>Email</label>
-          <input name="email" type="email" required />
-          <label class="mt-6">Mot de passe</label>
-          <input name="password" type="password" required />
-          <button class="btn mt-6" type="submit">Se connecter</button>
-        </form>
+        <form method="post" action="/login" autocomplete="on">
+  <label>Email</label>
+  <input name="email" type="email" autocomplete="username" required />
+
+  <label class="mt-6">Mot de passe</label>
+  <input name="password" type="password" autocomplete="current-password" required />
+
+  <button class="btn mt-6" type="submit">Se connecter</button>
+</form>
       </div>
     </div>
     """
