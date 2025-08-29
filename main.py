@@ -333,7 +333,10 @@ def page(content: str, title: str = APP_TITLE, user: Optional[User] = None) -> s
   <body>
     <header class="headbar">
       <div class="container" style="display:flex; align-items:center; justify-content:space-between; padding:.9rem 1rem;">
-        <div class="logo"><span class="logo-mark"></span> StayFlow</div>
+        <div class="logo">
+  <span class="logo-mark"></span>
+  {{ APP_NAME }} - {{ APP_TAGLINE }}
+</div>
         <nav style="display:flex; gap:.5rem;">
           <a class="badge" href="/properties">Logements</a>
           <a class="badge" href="/calendar">Calendrier</a>
