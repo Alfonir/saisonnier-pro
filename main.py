@@ -1025,6 +1025,8 @@ async def reservation_delete_confirm(res_id: int, user: "User" = Depends(current
             )
 
         prop_title = getattr(res.property, "title", "")
+        nights = max(0, (res.end_date - res.start_date).days)  # <-- calcule ici
+
         content = f"""
         <div class="container">
           <div class="card">
@@ -1032,7 +1034,7 @@ async def reservation_delete_confirm(res_id: int, user: "User" = Depends(current
             <p class="text-gray-600">
               Logement : <b>{prop_title}</b><br>
               Voyageur : <b>{res.guest_name or '–'}</b><br>
-              Séjour : <b>{res.start_date} → {res.end_date}</b> ({res.nights} nuits)
+              Séjour : <b>{res.start_date} → {res.end_date}</b> ({nights} nuits)
             </p>
             <form method="post" action="/reservations/{res.id}/delete">
               <button class="btn" style="background:#ef4444">Oui, supprimer</button>
@@ -1044,7 +1046,6 @@ async def reservation_delete_confirm(res_id: int, user: "User" = Depends(current
         return page(content, APP_TITLE, user=user)
     finally:
         db.close()
-
 
 # --- Suppression d'une réservation : exécution (POST) ----------------------
 @app.post("/reservations/{res_id}/delete")
