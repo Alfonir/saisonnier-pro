@@ -337,40 +337,168 @@ def page(content: str, title: str = APP_TITLE, user: Optional[User] = None) -> s
     return render_str("""
 <!doctype html>
 <html lang="fr">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>{{ title }}</title>
-    {{ head|safe }}
-  </head>
-  <body>
-    <header class="headbar">
-      <div class="container" style="display:flex; align-items:center; justify-content:space-between; padding:.9rem 1rem;">
-        <div class="logo">
-  <span class="logo-mark"></span>
-  {{ APP_NAME }} - {{ APP_TAGLINE }}
-</div>
-        <nav style="display:flex; gap:.5rem;">
-          <a class="badge" href="/properties">Logements</a>
-          <a class="badge" href="/calendar">Calendrier</a>
-          <a class="badge" href="/reservations">Réservations</a>
-          <a class="badge" href="/sync">Sync</a>
-          {% if user %}
-            <a class="badge" href="/logout">Déconnexion</a>
-          {% else %}
-            <a class="badge" href="/login">Connexion</a>
-            <a class="badge" href="/signup">Créer un compte</a>
-          {% endif %}
-        </nav>
-      </div>
-    </header>
+  <!doctype html>
+<html lang="fr" class="no-js" data-theme="light">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{{ APP_NAME }} — {{ APP_TAGLINE }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <style>
+    :root{
+      --bg:#f7fafc;           /* claire */
+      --ink:#0f172a;          /* texte principal */
+      --muted:#64748b;        /* texte secondaire */
+      --card:#ffffff;         /* cartes */
+      --surface:#eff6ff;      /* surfaces pâles */
+      --ring:rgba(14,165,233,.35);
+      --radius:16px;
+      --shadow:0 10px 30px rgba(2, 6, 23, .08);
+      --shadow-soft:0 6px 20px rgba(2, 6, 23, .06);
+      --brand-start:#0ea5e9;  /* sky-500 */
+      --brand-end:#22d3ee;    /* cyan-400 */
+    }
+    [data-theme="dark"]{
+      --bg:#0b1220;
+      --ink:#e5e7eb;
+      --muted:#94a3b8;
+      --card:#101827;
+      --surface:#0f172a;
+      --ring:rgba(56,189,248,.35);
+      --shadow:0 10px 30px rgba(0,0,0,.45);
+      --shadow-soft:0 6px 20px rgba(0,0,0,.35);
+    }
 
-    <main style="padding:1rem 0;">
-      {{ content|safe }}
-    </main>
-  </body>
-</html>
-    """, title=title, head=BASE_HEAD, content=content, user=user)
+    *{box-sizing:border-box}
+    html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Inter",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+    a{color:inherit;text-decoration:none}
+    .container{max-width:1200px;margin:0 auto;padding:0 20px}
+
+    /* Header sticky + blur */
+    .headbar{
+      position:sticky; top:0; z-index:50; backdrop-filter:saturate(140%) blur(12px);
+      background:linear-gradient(180deg, rgba(255,255,255,.75), rgba(255,255,255,.35));
+      border-bottom:1px solid rgba(15,23,42,.06);
+    }
+    [data-theme="dark"] .headbar{
+      background:linear-gradient(180deg, rgba(2,6,23,.65), rgba(2,6,23,.35));
+      border-bottom-color:rgba(255,255,255,.06);
+    }
+    .logo{
+      display:flex;align-items:center;gap:.75rem;font-weight:800;font-size:1.15rem;
+      letter-spacing:.2px;
+    }
+    .logo-mark{
+      width:34px;height:34px;border-radius:10px;display:inline-block;box-shadow:var(--shadow-soft);
+      background:radial-gradient(120% 120% at 0% 0%, var(--brand-end) 0%, var(--brand-start) 60%, #2563eb 100%);
+    }
+    nav{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap}
+    .pill{
+      display:inline-flex;align-items:center;gap:.5rem;padding:.55rem .9rem;border-radius:999px;
+      background:rgba(99,102,241,.06);border:1px solid rgba(15,23,42,.06);font-weight:600;
+      transition:.2s; box-shadow:0 1px 0 rgba(255,255,255,.4) inset;
+    }
+    .pill:hover{transform:translateY(-1px);box-shadow:var(--shadow-soft)}
+    .pill.active{background:linear-gradient(90deg, var(--brand-start), var(--brand-end));color:#fff;border-color:transparent}
+
+    .spacer{height:18px}
+
+    /* Layouts / cards */
+    .hero{padding:32px 0}
+    .grid{display:grid;gap:24px}
+    @media(min-width:900px){ .grid{grid-template-columns:1.1fr .9fr} }
+    .card{
+      background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow); padding:28px;
+      border:1px solid rgba(15,23,42,.06);
+    }
+    .card.soft{
+      background:
+        radial-gradient(100% 100% at 0% 0%, rgba(34,211,238,.10), transparent 60%),
+        radial-gradient(120% 120% at 100% 0%, rgba(14,165,233,.12), transparent 55%),
+        var(--card);
+    }
+    h1{font-size:2.35rem; line-height:1.15; margin:0 0 .5rem; letter-spacing:-.02em}
+    p.lead{color:var(--muted); margin:.25rem 0 1.2rem}
+
+    /* Buttons */
+    .btn{
+      appearance:none; border:0; cursor:pointer; font-weight:700; border-radius:14px;
+      padding:.9rem 1.2rem; box-shadow:var(--shadow-soft); transition:.15s;
+    }
+    .btn:focus{outline:3px solid var(--ring); outline-offset:2px}
+    .btn.primary{
+      color:#083344; background:linear-gradient(90deg, var(--brand-start), var(--brand-end));
+    }
+    .btn.primary:hover{transform:translateY(-1px)}
+    .btn.dark{ background:#0b1020; color:#fff }
+    .btn.ghost{ background:transparent; border:1px solid rgba(15,23,42,.12) }
+
+    /* Table */
+    .table{width:100%; border-collapse:separate; border-spacing:0 10px}
+    .table th{ text-align:left; font-size:.85rem; color:var(--muted); font-weight:600; padding:0 14px }
+    .table td{
+      background:var(--card); padding:16px 14px; border-top:1px solid rgba(15,23,42,.06);
+      border-bottom:1px solid rgba(15,23,42,.06);
+    }
+    .table tr td:first-child{ border-left:1px solid rgba(15,23,42,.06); border-radius:12px 0 0 12px }
+    .table tr td:last-child{ border-right:1px solid rgba(15,23,42,.06); border-radius:0 12px 12px 0 }
+    .badge{padding:.35rem .6rem;border-radius:999px; font-weight:700; font-size:.78rem}
+    .badge.ok{background:rgba(16,185,129,.12); color:#047857}
+    .badge.warn{background:rgba(251,191,36,.16); color:#92400e}
+    .badge.danger{background:rgba(239,68,68,.15); color:#7f1d1d}
+
+    /* Empty state */
+    .empty{display:flex;align-items:center;gap:14px;color:var(--muted)}
+    .empty-icon{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg, var(--brand-start), var(--brand-end));opacity:.35}
+
+    /* Toast */
+    .toast{position:fixed; right:18px; bottom:18px; padding:14px 16px; background:var(--card);
+      border:1px solid rgba(15,23,42,.1); box-shadow:var(--shadow); border-radius:12px; display:none}
+    .toast.show{display:block; animation:pop .2s ease-out}
+    @keyframes pop{ from{transform:translateY(8px); opacity:.0} to{transform:none; opacity:1} }
+
+    /* Dark mode switch */
+    .mode{display:flex;align-items:center;gap:.4rem}
+    .toggle{width:42px;height:26px;border-radius:999px;background:rgba(15,23,42,.12);position:relative}
+    .thumb{position:absolute; top:3px; left:3px; width:20px;height:20px;border-radius:999px;background:#fff; transition:.2s}
+    [data-theme="dark"] .toggle{background:rgba(255,255,255,.2)}
+    [data-theme="dark"] .thumb{left:19px}
+  </style>
+</head>
+
+<body>
+<header class="headbar">
+  <div class="container" style="display:flex;align-items:center;justify-content:space-between;padding:.8rem 0;">
+    <div class="logo">
+      <span class="logo-mark"></span>
+      <div>
+        <div style="font-size:1.05rem;font-weight:800">{{ APP_NAME }}</div>
+        <div style="font-size:.78rem;color:var(--muted);margin-top:-2px">{{ APP_TAGLINE }}</div>
+      </div>
+    </div>
+
+    <nav>
+      <a class="pill {% if active=='properties' %}active{% endif %}" href="/properties">Logements</a>
+      <a class="pill {% if active=='calendar' %}active{% endif %}" href="/calendar">Calendrier</a>
+      <a class="pill {% if active=='reservations' %}active{% endif %}" href="/reservations">Réservations</a>
+      <a class="pill {% if active=='sync' %}active{% endif %}" href="/sync">Sync</a>
+      {% if user %}
+        <a class="pill" href="/logout">Déconnexion</a>
+      {% else %}
+        <a class="pill" href="/login">Connexion</a>
+        <a class="pill" href="/signup">Créer un compte</a>
+      {% endif %}
+      <div class="mode">
+        <div id="themeToggle" class="toggle"><div class="thumb"></div></div>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<div class="spacer"></div>
+
 
 # ============================================================
 # Auth minimale (cookie 'uid')
