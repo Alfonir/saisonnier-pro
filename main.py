@@ -455,7 +455,8 @@ async def signup_get(request: Request, user: Optional[User] = Depends(current_us
     """
     return page(content, APP_TITLE, user=None)
 
-from sqlalchemy.exc import IntegrityError, OperationalError
+from sqlalchemy.exc import IntegrityError, OperationalError, ProgrammingError
+from sqlalchemy import text
 
 @app.post("/signup")
 async def signup_post(
