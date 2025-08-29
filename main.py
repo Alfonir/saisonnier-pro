@@ -366,18 +366,23 @@ def page(content: str, title: str = APP_TITLE, user: Optional[User] = None, acti
         </div>
       </div>
 
-      <nav>
-        <a class="pill {{% if active=='properties' %}}active{{% endif %}}" href="/properties">Logements</a>
-        <a class="pill {{% if active=='calendar' %}}active{{% endif %}}" href="/calendar">Calendrier</a>
-        <a class="pill {{% if active=='reservations' %}}active{{% endif %}}" href="/reservations">Réservations</a>
-        <a class="pill {{% if active=='sync' %}}active{{% endif %}}" href="/sync">Sync</a>
-        {{% if user %}}
-          <a class="pill" href="/logout">Déconnexion</a>
-        {{% else %}}
-          <a class="pill" href="/login">Connexion</a>
-          <a class="pill" href="/signup">Créer un compte</a>
-        {{% endif %}}
-      </nav>
+      <nav class="topnav">
+  <div class="nav-group nav-primary">
+    <a class="pill {% if active=='properties' %}active{% endif %}" href="/properties">Logements</a>
+    <a class="pill {% if active=='calendar' %}active{% endif %}" href="/calendar">Calendrier</a>
+    <a class="pill {% if active=='reservations' %}active{% endif %}" href="/reservations">Réservations</a>
+    <a class="pill {% if active=='sync' %}active{% endif %}" href="/sync">Sync</a>
+  </div>
+
+  <div class="nav-group nav-auth">
+    {% if user %}
+      <a class="pill" href="/logout">Déconnexion</a>
+    {% else %}
+      <a class="pill" href="/login">Connexion</a>
+      <a class="pill pill-accent" href="/signup">Créer un compte</a>
+    {% endif %}
+  </div>
+</nav>
     </div>
   </header>
 
