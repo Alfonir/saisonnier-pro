@@ -446,15 +446,18 @@ async def signup_get(request: Request, user: Optional[User] = Depends(current_us
     <div class="container">
       <div class="card" style="max-width:480px; margin:0 auto;">
         <h2 class="text-xl font-semibold mb-2">Créer un compte</h2>
-        <form method="post" action="/signup">
-          <label>Email</label>
-          <input name="email" type="email" required />
-          <label class="mt-6">Nom</label>
-          <input name="name" type="text" />
-          <label class="mt-6">Mot de passe</label>
-          <input name="password" type="password" required />
-          <button class="btn btn-accent mt-6" type="submit">Créer</button>
-        </form>
+        <form method="post" action="/signup" autocomplete="off">
+  <label>Email</label>
+  <input name="email" type="email" autocomplete="username" value="" required />
+
+  <label class="mt-6">Nom</label>
+  <input name="name" type="text" autocomplete="name" value="" />
+
+  <label class="mt-6">Mot de passe</label>
+  <input name="password" type="password" autocomplete="new-password" value="" required />
+
+  <button class="btn btn-accent mt-6" type="submit">Créer</button>
+</form>
       </div>
     </div>
     """
