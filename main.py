@@ -339,6 +339,39 @@ input:focus, select:focus{ border-color:var(--accent); box-shadow:0 0 0 4px var(
 .items-center{ align-items:center; }
 .justify-between{ justify-content:space-between; }
 .mb-3{ margin-bottom:.75rem; }
+.topnav{
+  display:flex; gap:.6rem; align-items:center; justify-content:space-between;
+  flex-wrap:wrap;
+}
+
+/* Groupes gauche/droite */
+.nav-group{display:flex; gap:.6rem; align-items:center; flex-wrap:wrap}
+.nav-auth{margin-left:auto}
+
+/* Pills */
+.pill{
+  display:inline-flex; align-items:center; gap:.45rem;
+  padding:.55rem .9rem; border-radius:999px; font-weight:700;
+  border:1px solid rgba(15,23,42,.10);
+  background:rgba(99,102,241,.06);
+  box-shadow:0 1px 0 rgba(255,255,255,.4) inset;
+  transition:.18s;
+}
+.pill:hover{ transform:translateY(-1px); box-shadow:0 6px 18px rgba(2,6,23,.08) }
+.pill.active{
+  background:linear-gradient(90deg, var(--brand-start), var(--brand-end));
+  border-color:transparent; color:#fff;
+}
+.pill-accent{
+  background:linear-gradient(90deg, var(--brand-start), var(--brand-end));
+  border-color:transparent; color:#06253A; font-weight:800;
+}
+
+/* Mobile: nav scrollable si trop de liens */
+@media (max-width: 920px){
+  .topnav{overflow:auto; white-space:nowrap; gap:.4rem; padding-bottom:.4rem}
+  .nav-auth{margin-left:0}
+}
 </style>
 """
 
