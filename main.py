@@ -1312,39 +1312,41 @@ async def calendar_view(request: Request, user: User = Depends(current_user), db
         days = (next_m - m).days
 
             rows = []
-    for pid, title in sorted(titles.items(), key=lambda kv: kv[1].lower()):
-        cells = []
-        for d in range(1, days + 1):
-            key = (pid, date(m.year, m.month, d).isoformat())
-            mark = "●" if busy.get(key) else ""
-            cells.append(f"<td style='text-align:center; padding:.25rem .35rem;'>{mark}</td>")
+for pid, title in sorted(titles.items(), key=lambda kv: kv[1].lower()):
+    cells = []
+    for d in range(1, days + 1):
+        key = (pid, date(m.year, m.month, d).isoformat())
+        mark = "●" if busy.get(key) else ""
+        cells.append(f"<td style='text-align:center; padding:.25rem .35rem;'>{mark}</td>")
 
-        header_days = "".join(
-            [f"<th style='padding:.25rem .35rem; text-align:center;'>{i}</th>" for i in range(1, days + 1)]
-        )
-        row_cells = "".join(cells)
-        rows.append(f"<tr><th style='text-align:left; padding:.25rem .35rem;'>{title}</th>{row_cells}</tr>")
+    header_days = "".join(
+        [f"<th style='padding:.25rem .35rem; text-align:center;'>{i}</th>" for i in range(1, days + 1)]
+    )
+    row_cells = "".join(cells)
+    rows.append(
+        f"<tr><th style='text-align:left; padding:.25rem .35rem;'>{title}</th>{row_cells}</tr>"
+    )
 
-    # ⚠️ OUVERTURE correcte : f + 3 guillemets
-    table = f"""
-    <div class="card" style="overflow:auto;">
-      <h3 class="text-xl font-semibold mb-2">{m.strftime('%B %Y').capitalize()}</h3>
-      <table style="border-collapse:separate; border-spacing:0 .25rem;">
-        <thead><tr>{header_days}</tr></thead>
-        <tbody>{(''.join(rows)) or "<tr><td>Aucun logement</td></tr>"}</tbody>
-      </table>
-    </div>
-    """  # ⚠️ FERMETURE correcte : exactement 3 guillemets
+table = dedent(f"""\
+<div class="card" style="overflow:auto;">
+  <h3 class="text-xl font-semibold mb-2">{m.strftime('%B %Y').capitalize()}</h3>
+  <table style="border-collapse:separate; border-spacing:0 .25rem;">
+    <thead><tr>{header_days}</tr></thead>
+    <tbody>{(''.join(rows)) or "<tr><td>Aucun logement</td></tr>"}</tbody>
+  </table>
+</div>
+""")
 
-    month_blocks.append(table)
+month_blocks.append(table)
 
-    # Bloc final de page
-    content = f"""
-    <div class="container" style="display:grid; gap:1rem;">
-      {''.join(month_blocks)}
-    </div>
-    """
-    return page(content, APP_TITLE, user=user)
+# Bloc final de page
+content = dedent(f"""\
+<div class="container" style="display:grid; gap:1rem;">
+  {''.join(month_blocks)}
+</div>
+""")
+
+return page(content, APP_TITLE, user=user)
 
 # ------------------------------------------------------------
 # Lancement local (utile pour tester en dev)
