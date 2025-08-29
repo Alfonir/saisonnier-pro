@@ -470,36 +470,50 @@ async def signup_post(
     pwd         = (password or "").strip()
 
     if not email_clean or "@" not in email_clean:
-        return HTMLResponse(page("<div class='container'><div class='card'>Email invalide.</div></div>", APP_TITLE), status_code=400)
+        return HTMLResponse(
+            page("<div class='container'><div class='card'>Email invalide.</div></div>", APP_TITLE),
+            status_code=400
+        )
     if not pwd:
-        return HTMLResponse(page("<div class='container'><div class='card'>Mot de passe requis.</div></div>", APP_TITLE), status_code=400)
+        return HTMLResponse(
+            page("<div class='container'><div class='card'>Mot de passe requis.</div></div>", APP_TITLE),
+            status_code=400
+        )
 
     db = SessionLocal()
-        # force la création des tables si besoin
     try:
-        db.execute(text("SELECT 1 FROM users LIMIT 1"))
-    except (OperationalError, ProgrammingError):
-        Base.metadata.create_all(bind=engine)
+        # --- crée les tables si 'users' n'existe pas
+        try:
+            db.execute(text("SELECT 1 FROM users LIMIT 1"))
+        except (OperationalError, ProgrammingError):
+            Base.metadata.create_all(bind=engine)
 
-        exists = db.query(User).filter(User.email == email_clean).first()
+        # email déjà pris ?
+        exists = db.query(User).filter(func.lower(User.email) == email_clean).first()
         if exists:
-            return HTMLResponse(page("<div class='container'><div class='card'>Email déjà utilisé.</div></div>", APP_TITLE), status_code=400)
+            return HTMLResponse(
+                page("<div class='container'><div class='card'>Email déjà utilisé.</div></div>", APP_TITLE),
+                status_code=400
+            )
 
         u = User(email=email_clean, name=name_clean, password=hash_password(pwd))
         db.add(u)
-        try:
-            db.commit()
-        except IntegrityError:
-            db.rollback()
-            return HTMLResponse(page("<div class='container'><div class='card'>Ce compte existe déjà.</div></div>", APP_TITLE), status_code=400)
+        db.commit()
 
         resp = RedirectResponse("/properties", status_code=303)
         resp.set_cookie("uid", str(u.id), httponly=True, samesite="lax")
         return resp
 
-    except Exception as e:
+    except IntegrityError:
+        db.rollback()
         return HTMLResponse(
-            page(f"<div class='container'><div class='card'>Erreur serveur pendant l’inscription.<br><small>{type(e).__name__}: {e}</small></div></div>", APP_TITLE),
+            page("<div class='container'><div class='card'>Ce compte existe déjà.</div></div>", APP_TITLE),
+            status_code=400
+        )
+    except Exception as e:
+        # Renvoie bien un code 500 en cas d’exception réelle
+        return HTMLResponse(
+            page(f"<div class='container'><div class='card'>Erreur serveur pendant l’inscription.<br><small>{type(e).__name__}: {esc(str(e))}</small></div></div>", APP_TITLE),
             status_code=500
         )
     finally:
