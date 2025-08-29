@@ -230,6 +230,11 @@ def diag_init():
 from jinja2 import Environment, select_autoescape
 env = Environment(autoescape=select_autoescape())
 
+env.globals.update(
+    APP_NAME=APP_NAME,
+    APP_TAGLINE=APP_TAGLINE,
+)
+
 def render_str(html: str, **ctx) -> str:
     return env.from_string(html).render(**ctx)
     
