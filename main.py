@@ -867,7 +867,6 @@ async def reservation_new_post(request: Request, user: "User" = Depends(current_
             guest_name  = guest,
             start_date  = sd_dt,
             end_date    = ed_dt,
-            nights      = (ed_dt - sd_dt).days,
             total_price = float(price_in) if price_in not in (None, "") else None,
             source      = "manual",
         )
