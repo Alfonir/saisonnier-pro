@@ -476,9 +476,9 @@ async def signup_post(
     db = SessionLocal()
     try:
         # force la création des tables si besoin
-        try:
-            db.execute("SELECT 1 FROM users LIMIT 1")
-        except OperationalError:
+    try:
+            db.execute(text("SELECT 1 FROM users LIMIT 1"))
+        except (OperationalError, ProgrammingError):
             Base.metadata.create_all(bind=engine)
 
         exists = db.query(User).filter(User.email == email_clean).first()
