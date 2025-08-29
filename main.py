@@ -519,8 +519,7 @@ async def home(request: Request, user: Optional[User] = Depends(current_user)):
       </div>
     </div>
     """
-    return page(content, APP_TITLE, user=user)
-
+    return page(content, APP_TITLE, user=user, active="properties")
 
 # --- Signup / Login / Logout --------------------------------
 @app.get("/signup", response_class=HTMLResponse)
