@@ -1327,7 +1327,9 @@ for pid, title in sorted(titles.items(), key=lambda kv: kv[1].lower()):
         f"<tr><th style='text-align:left; padding:.25rem .35rem;'>{title}</th>{row_cells}</tr>"
     )
 
-table = dedent(f"""
+from textwrap import dedent  # ← vérifie que c'est bien importé en haut
+
+table = dedent(f'''
     <div class="card" style="overflow:auto;">
       <h3 class="text-xl font-semibold mb-2">{m.strftime('%B %Y').capitalize()}</h3>
       <table style="border-collapse:separate; border-spacing:0 .25rem;">
@@ -1335,19 +1337,18 @@ table = dedent(f"""
         <tbody>{(''.join(rows)) or "<tr><td>Aucun logement</td></tr>"}</tbody>
       </table>
     </div>
-""")
+''')
 
 month_blocks.append(table)
 
 # Bloc final de page
-content = dedent(f"""
+content = dedent(f'''
     <div class="container" style="display:grid; gap:1rem;">
       {''.join(month_blocks)}
     </div>
-""")
+''')
 
 return page(content, APP_TITLE, user=user)
-
 
 # ------------------------------------------------------------
 # Lancement local (utile pour tester en dev)
