@@ -335,7 +335,7 @@ def page(content: str, title: str = APP_TITLE, user: Optional[User] = None) -> s
       <div class="container" style="display:flex; align-items:center; justify-content:space-between; padding:.9rem 1rem;">
         <div class="logo">
   <span class="logo-mark"></span>
-  {{ StayFlow }} - {{ Le cockpit de vos locations }}
+  {{ APP_NAME }} - {{ APP_TAGLINE }}
 </div>
         <nav style="display:flex; gap:.5rem;">
           <a class="badge" href="/properties">Logements</a>
