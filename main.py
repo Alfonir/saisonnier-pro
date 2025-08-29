@@ -1331,12 +1331,11 @@ async def calendar_view(request: Request, user: User = Depends(current_user), db
         month_blocks.append(table)
 
     content = f"""
-    <div class="container" style="display:grid; gap:1rem;">
-      {''.join(month_blocks)}
-    </div>
-    """
-    return page(content, APP_TITLE, user=user)
-
+<div class="container" style="display:grid; gap:1rem;">
+  {''.join(month_blocks)}
+</div>
+"""
+return page(content, APP_TITLE, user=user)
 
 # ------------------------------------------------------------
 # Lancement local (utile pour tester en dev)
