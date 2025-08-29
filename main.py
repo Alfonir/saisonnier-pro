@@ -195,6 +195,14 @@ def get_owned_property(db, user_id: int, prop_id: int) -> "Property | None":
 
 app = FastAPI(title=APP_TITLE)
 
+from fastapi.templating import Jinja2Templates
+
+templates = Jinja2Templates(directory="templates")
+templates.env.globals.update(
+    APP_NAME=APP_NAME,
+    APP_TAGLINE=APP_TAGLINE,
+)
+
 from starlette.responses import Response
 
 @app.head("/")
