@@ -60,7 +60,8 @@ def verify_password(input_password: str, stored: str) -> bool:
 # Config appli
 # ============================================================
 
-APP_TITLE = "StayFlow — Le cockpit de vos locations"
+APP_NAME = "StayFlow"
+APP_TAGLINE = "Le cockpit de vos locations"
 
 # DATABASE_URL normalisée (sqlite local par défaut)
 DB_URL_RAW = os.getenv("DATABASE_URL", "sqlite:///./saisonnier.db")
