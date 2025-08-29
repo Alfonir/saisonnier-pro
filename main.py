@@ -1063,7 +1063,7 @@ async def reservation_edit_form(res_id: int, user: "User" = Depends(current_user
               </div>
               <div class="mb-2">
                 <label>Nom du client</label>
-                <input name="guest_name" value="{(res.guest_name or '').replace('"','&quot;')}">
+                <input name="guest_name" value="{esc(res.guest_name)}">
               </div>
               <div class="mb-2">
                 <label>Début</label>
