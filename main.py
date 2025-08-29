@@ -35,6 +35,12 @@ from dateutil.parser import parse as dparse
 import hashlib, secrets, string
 from sqlalchemy import func
 
+import html
+
+def esc(s: str | None) -> str:
+    """Échappe &, <, > et " pour un usage sûr dans value=""."""
+    return html.escape(s or "", quote=True)
+
 SALT = "stayflow$2025"   # fixe; tu peux le mettre en env si tu veux
 
 def hash_password(p: str) -> str:
