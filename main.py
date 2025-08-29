@@ -1180,7 +1180,7 @@ async def reservation_delete_confirm(res_id: int, user: "User" = Depends(current
         prop_title = getattr(res.property, "title", "")
         nights = max(0, (res.end_date - res.start_date).days)  # <-- calcule ici
 
-        content = f"""
+       content = f"""
 <div class="container">
   <div class="card">
     <h2 class="text-xl font-semibold mb-2">Supprimer la réservation</h2>
@@ -1195,6 +1195,7 @@ async def reservation_delete_confirm(res_id: int, user: "User" = Depends(current
   </div>
 </div>
 """
+
 
         return page(content, APP_TITLE, user=user)
     finally:
