@@ -1160,16 +1160,16 @@ async def reservation_edit_post(res_id: int, request: Request, user: "User" = De
 
     return RedirectResponse("/reservations", status_code=303)
 
-# --- Suppression d'une réservation : confirmation (GET) ---------------------
+# ---- Suppression d'une réservation : confirmation (GET) --------------------
 @app.get("/reservations/{res_id}/delete", response_class=HTMLResponse)
 async def reservation_delete_confirm(res_id: int, user: "User" = Depends(current_user)):
     db = SessionLocal()
     try:
         res = (
             db.query(Reservation)
-            .join(Property, Reservation.property_id == Property.id)
-            .filter(Reservation.id == res_id, Property.owner_id == user.id)
-            .first()
+              .join(Property, Reservation.property_id == Property.id)
+              .filter(Reservation.id == res_id, Property.owner_id == user.id)
+              .first()
         )
         if not res:
             return HTMLResponse(
@@ -1177,27 +1177,27 @@ async def reservation_delete_confirm(res_id: int, user: "User" = Depends(current
                 status_code=404,
             )
 
-        prop_title = getattr(res.property, "title", "")
-        nights = max(0, (res.end_date - res.start_date).days)  # <-- calcule ici
+        prop_title = getattr(res.property, "title", "") or ""
+        nights = max(0, (res.end_date - res.start_date).days)
 
-       content = f"""
+        # IMPORTANT : on ouvre et on FERME bien la f-string triple-quoted
+        content = f"""
 <div class="container">
   <div class="card">
     <h2 class="text-xl font-semibold mb-2">Supprimer la réservation</h2>
     <p class="text-gray-600">
-      Logement : <b>{prop_title}</b><br>
-      Voyageur : <b>{res.guest_name or '-'}</b><br>
+      Logement : <b>{esc(prop_title)}</b><br>
+      Voyageur : <b>{esc(res.guest_name) or '-'}</b><br>
       Séjour : <b>{res.start_date} &rarr; {res.end_date}</b> ({nights} nuits)
     </p>
-    <form method="post" action="/reservations/{res.id}/delete">
+    <form method="post" action="/reservations/{res.id}/delete" style="display:flex; gap:.5rem">
       <button class="btn" style="background:#ef4444">Oui, supprimer</button>
+      <a class="btn ghost" href="/reservations">Annuler</a>
     </form>
   </div>
 </div>
 """
-
-
-        return page(content, APP_TITLE, user=user)
+        return HTMLResponse(page(content, APP_TITLE, user=user))
     finally:
         db.close()
 
