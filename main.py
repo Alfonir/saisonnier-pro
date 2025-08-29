@@ -343,57 +343,102 @@ input:focus, select:focus{ border-color:var(--accent); box-shadow:0 0 0 4px var(
 """
 
 def page(content: str, title: str = APP_TITLE, user: Optional[User] = None, active: str = "") -> str:
-    return render_str(""" ... (ta grosse template HTML) ... """,
-                      user=user, active=active, content=content, title=title)
-    # Rend juste une chaîne HTML (les routes renverront HTMLResponse(page(...)))
-    return render_str(f"""
+    # Important : PAS de f-string ici -> simple triple-quoted string
+    return render_str("""
 <!doctype html>
-<html lang="fr">
+<html lang="fr" class="no-js" data-theme="light">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{title}</title>
-  {BASE_HEAD}
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{{ title }}</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg:#f7fafc; --ink:#0f172a; --muted:#64748b; --card:#ffffff;
+      --ring:rgba(14,165,233,.35); --radius:16px;
+      --brand-start:#0ea5e9; --brand-end:#22d3ee;
+      --shadow:0 10px 30px rgba(2, 6, 23, .08);
+      --shadow-soft:0 6px 20px rgba(2, 6, 23, .06);
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;background:var(--bg);color:var(--ink);
+      font:16px/1.5 "Inter",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+
+    /* Header */
+    .headbar{
+      position:sticky; top:0; z-index:50; backdrop-filter:saturate(140%) blur(12px);
+      background:linear-gradient(180deg, rgba(255,255,255,.75), rgba(255,255,255,.35));
+      border-bottom:1px solid rgba(15,23,42,.06);
+    }
+    .container{max-width:1200px;margin:0 auto;padding:0 20px}
+    .logo{display:flex;align-items:center;gap:.75rem;font-weight:800}
+    .logo-mark{width:34px;height:34px;border-radius:10px;display:inline-block;box-shadow:var(--shadow-soft);
+      background:radial-gradient(120% 120% at 0% 0%, var(--brand-end) 0%, var(--brand-start) 60%, #2563eb 100%);}
+
+    /* Nouvelle nav : 2 groupes espacés */
+    .topnav{display:flex;align-items:center;justify-content:space-between; gap:1rem}
+    .nav-group{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap}
+    .pill{
+      display:inline-flex;align-items:center;gap:.5rem;padding:.55rem .9rem;border-radius:999px;
+      background:rgba(99,102,241,.06);border:1px solid rgba(15,23,42,.06);font-weight:600;
+      transition:.2s; box-shadow:0 1px 0 rgba(255,255,255,.4) inset; text-decoration:none; color:inherit;
+    }
+    .pill:hover{transform:translateY(-1px);box-shadow:var(--shadow-soft)}
+    .pill.active{background:linear-gradient(90deg, var(--brand-start), var(--brand-end));color:#fff;border-color:transparent}
+    .pill-accent{background:#0b1020;color:#fff}
+
+    /* Cartes etc. */
+    .spacer{height:18px}
+    .card{background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow); padding:28px;
+      border:1px solid rgba(15,23,42,.06);}
+  </style>
 </head>
+
 <body>
   <header class="headbar">
     <div class="container" style="display:flex;align-items:center;justify-content:space-between;padding:.8rem 0;">
       <div class="logo">
         <span class="logo-mark"></span>
         <div>
-          <div style="font-size:1.05rem;font-weight:800">{APP_NAME}</div>
-          <div style="font-size:.78rem;color:#64748b;margin-top:-2px">{APP_TAGLINE}</div>
+          <div style="font-size:1.05rem;font-weight:800">{{ APP_NAME }}</div>
+          <div style="font-size:.78rem;color:var(--muted);margin-top:-2px">{{ APP_TAGLINE }}</div>
         </div>
       </div>
 
+      <!-- NAV : deux groupes (gauche = sections, droite = auth) -->
       <nav class="topnav">
-  <div class="nav-group nav-primary">
-    <a class="pill {% if active=='properties' %}active{% endif %}" href="/properties">Logements</a>
-    <a class="pill {% if active=='calendar' %}active{% endif %}" href="/calendar">Calendrier</a>
-    <a class="pill {% if active=='reservations' %}active{% endif %}" href="/reservations">Réservations</a>
-    <a class="pill {% if active=='sync' %}active{% endif %}" href="/sync">Sync</a>
-  </div>
-
-  <div class="nav-group nav-auth">
-    {% if user %}
-      <a class="pill" href="/logout">Déconnexion</a>
-    {% else %}
-      <a class="pill" href="/login">Connexion</a>
-      <a class="pill pill-accent" href="/signup">Créer un compte</a>
-    {% endif %}
-  </div>
-</nav>
+        <div class="nav-group">
+          <a class="pill {% if active=='properties' %}active{% endif %}" href="/properties">Logements</a>
+          <a class="pill {% if active=='calendar' %}active{% endif %}" href="/calendar">Calendrier</a>
+          <a class="pill {% if active=='reservations' %}active{% endif %}" href="/reservations">Réservations</a>
+          <a class="pill {% if active=='sync' %}active{% endif %}" href="/sync">Sync</a>
+        </div>
+        <div class="nav-group">
+          {% if user %}
+            <a class="pill" href="/logout">Déconnexion</a>
+          {% else %}
+            <a class="pill" href="/login">Connexion</a>
+            <a class="pill pill-accent" href="/signup">Créer un compte</a>
+          {% endif %}
+        </div>
+      </nav>
     </div>
   </header>
 
   <div class="spacer"></div>
 
   <main class="container">
-    {content}
+    {{ content | safe }}
   </main>
 </body>
 </html>
-""", user=user)
+""",
+    # Contexte Jinja (tu peux en ajouter si besoin)
+    title=title, user=user, active=active,
+)
 
 # ============================================================
 # Auth minimale (cookie 'uid')
