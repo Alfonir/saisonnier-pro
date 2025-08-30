@@ -536,25 +536,25 @@ def health() -> dict:
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request, user: Optional[User] = Depends(current_user)):
     content = """
-    <div class="container">
-      <div class="hero">
-        <div class="card" style="display:flex; flex-direction:column;">
-          <h1 class="text-3xl md:text-4xl font-semibold mb-2">Centralisez vos réservations.</h1>
-          <p class="text-gray-600">Import iCal, calendrier consolidé, et planning ménage.</p>
-          <div class="cta-stack">
-            <a href="/signup" class="btn btn-accent mt-6">Créer un compte</a>
-          </div>
+    <div class="hero">
+      <div class="card" style="display:flex; flex-direction:column;">
+        <h1>Centralisez vos réservations.</h1>
+        <p class="lead">Import iCal, calendrier consolidé, et planning ménage.</p>
+        <div style="margin-top:auto">
+          <a href="/signup" class="btn primary">Créer un compte</a>
         </div>
-        <div class="card" style="display:flex; flex-direction:column;">
-          <div class="text-gray-600">Déjà un compte ?</div>
-          <div class="cta-stack">
-            <a href="/login" class="btn mt-6">Se connecter</a>
-          </div>
+      </div>
+
+      <div class="card" style="display:flex; flex-direction:column;">
+        <div class="lead">Déjà un compte ?</div>
+        <div style="margin-top:auto">
+          <a href="/login" class="btn dark">Se connecter</a>
         </div>
       </div>
     </div>
     """
-    return page(content, APP_TITLE, user=user, active="")
+    # important: on place le contenu dans <main class="container"> via page()
+    return page(content, APP_TITLE, user=user, active="properties")
 
 # --- Signup / Login / Logout --------------------------------
 @app.get("/signup", response_class=HTMLResponse)
