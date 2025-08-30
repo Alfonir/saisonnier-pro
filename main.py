@@ -546,23 +546,25 @@ def health() -> dict:
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request, user: Optional[User] = Depends(current_user)):
     content = """
-    <div class="hero">
-      <div class="card" style="display:flex; flex-direction:column;">
-        <h1>Centralisez vos réservations.</h1>
-        <p class="lead">Import iCal, calendrier consolidé, et planning ménage.</p>
-        <div style="margin-top:auto">
-          <a href="/signup" class="btn primary">Créer un compte</a>
-        </div>
-      </div>
-
-      <div class="card" style="display:flex; flex-direction:column;">
-        <div class="lead">Déjà un compte ?</div>
-        <div style="margin-top:auto">
-          <a href="/login" class="btn dark">Se connecter</a>
-        </div>
-      </div>
+<div class="hero"
+     style="display:grid;grid-template-columns:1.1fr .9fr;gap:24px;align-items:stretch;padding:32px 0">
+  <div class="card" style="display:flex;flex-direction:column;">
+    <h1>Centralisez vos réservations.</h1>
+    <p class="lead">Import iCal, calendrier consolidé, et planning ménage.</p>
+    <div style="margin-top:auto">
+      <a href="/signup" class="btn primary">Créer un compte</a>
     </div>
-    """
+  </div>
+
+  <div class="card" style="display:flex;flex-direction:column;">
+    <div class="lead">Déjà un compte ?</div>
+    <div style="margin-top:auto">
+      <a href="/login" class="btn dark">Se connecter</a>
+    </div>
+  </div>
+</div>
+"""
+
     # important: on place le contenu dans <main class="container"> via page()
     return page(content, APP_TITLE, user=user, active="properties")
 
