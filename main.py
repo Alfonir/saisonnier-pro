@@ -386,128 +386,15 @@ BASE_HEAD = """
 """
 
 def page(content: str, title: str = APP_TITLE, user: Optional[User] = None, active: str = "") -> str:
-    # rendu Jinja: surtout PAS de f-string ici
     return render_str("""
 <!doctype html>
 <html lang="fr" class="no-js" data-theme="light">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>{{ title }}</title>
-  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
-  <style>
-    :root{
-      --bg:#f7fafc;           /* claire */
-      --ink:#0f172a;          /* texte principal */
-      --muted:#64748b;        /* texte secondaire */
-      --card:#ffffff;         /* cartes */
-      --surface:#eff6ff;      /* surfaces pâles */
-      --ring:rgba(14,165,233,.35);
-      --radius:16px;
-      --shadow:0 10px 30px rgba(2, 6, 23, .08);
-      --shadow-soft:0 6px 20px rgba(2, 6, 23, .06);
-      --brand-start:#0ea5e9;  /* sky-500 */
-      --brand-end:#22d3ee;    /* cyan-400 */
-    }
-    *{box-sizing:border-box}
-    html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Inter",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
-    a{color:inherit;text-decoration:none}
-    .container{max-width:1200px;margin:0 auto;padding:0 20px}
-
-    /* Header sticky + blur */
-    .headbar{
-      position:sticky; top:0; z-index:50; backdrop-filter:saturate(140%) blur(12px);
-      background:linear-gradient(180deg, rgba(255,255,255,.75), rgba(255,255,255,.35));
-      border-bottom:1px solid rgba(15,23,42,.06);
-    }
-    .logo{
-      display:flex;align-items:center;gap:.75rem;font-weight:800;font-size:1.05rem;letter-spacing:.2px;
-    }
-    .logo-mark{
-      width:34px;height:34px;border-radius:10px;display:inline-block;box-shadow:var(--shadow-soft);
-      background:radial-gradient(120% 120% at 0% 0%, var(--brand-end) 0%, var(--brand-start) 60%, #2563eb 100%);
-    }
-
-    /* NAV en deux groupes (gauche = sections, droite = auth) */
-    .topnav{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
-    .nav-group{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap}
-    .pill{
-      display:inline-flex;align-items:center;gap:.5rem;padding:.55rem .9rem;border-radius:999px;
-      background:rgba(99,102,241,.06);border:1px solid rgba(15,23,42,.06);font-weight:700;
-      transition:.2s; box-shadow:0 1px 0 rgba(255,255,255,.4) inset;
-    }
-    .pill:hover{transform:translateY(-1px);box-shadow:var(--shadow-soft)}
-    .pill.active{background:linear-gradient(90deg, var(--brand-start), var(--brand-end));color:#fff;border-color:transparent}
-    .pill-accent{background:#0b1020;color:#fff}
-
-    .spacer{height:18px}
-
-    /* Layouts / cards / hero */
-    .grid{display:grid;gap:24px}
-    @media(min-width:900px){ .grid{grid-template-columns:1.1fr .9fr} }
-    /* Hero en 2 colonnes (responsive) */
-.hero{
-  display:grid;
-  grid-template-columns:1.1fr .9fr;
-  gap:24px;
-  align-items:stretch;
-  padding:32px 0;
-}
-@media (max-width: 900px){
-  .hero{ grid-template-columns:1fr; }
-}
-    .card{
-      background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow); padding:28px;
-      border:1px solid rgba(15,23,42,.06);
-    }
-    h1{font-size:2.35rem; line-height:1.15; margin:0 0 .5rem; letter-spacing:-.02em}
-    p.lead{color:var(--muted); margin:.25rem 0 1.2rem}
-
-    /* Buttons */
-    .btn{
-      appearance:none; border:0; cursor:pointer; font-weight:800; border-radius:14px;
-      padding:.9rem 1.2rem; box-shadow:var(--shadow-soft); transition:.15s;
-    }
-    .btn:focus{outline:3px solid var(--ring); outline-offset:2px}
-    .btn.primary{
-      color:#083344; background:linear-gradient(90deg, var(--brand-start), var(--brand-end));
-    }
-    .btn.dark{ background:#0b1020; color:#fff }
-  </style>
+  ...
 </head>
 
 <body>
-<header class="headbar">
-  <div class="container" style="display:flex;align-items:center;justify-content:space-between;padding:.8rem 0;">
-    <div class="logo">
-      <span class="logo-mark"></span>
-      <div>
-        <div style="font-weight:800">{{ APP_NAME }}</div>
-        <div style="font-size:.78rem;color:var(--muted);margin-top:-2px">{{ APP_TAGLINE }}</div>
-      </div>
-    </div>
-
-    <nav class="topnav">
-      <div class="nav-group">
-        <a class="pill {% if active=='properties' %}active{% endif %}" href="/properties">Logements</a>
-        <a class="pill {% if active=='calendar' %}active{% endif %}" href="/calendar">Calendrier</a>
-        <a class="pill {% if active=='reservations' %}active{% endif %}" href="/reservations">Réservations</a>
-        <a class="pill {% if active=='sync' %}active{% endif %}" href="/sync">Sync</a>
-      </div>
-      <div class="nav-group">
-        {% if user %}
-          <a class="pill" href="/logout">Déconnexion</a>
-        {% else %}
-          <a class="pill" href="/login">Connexion</a>
-          <a class="pill pill-accent" href="/signup">Créer un compte</a>
-        {% endif %}
-      </div>
-    </nav>
-  </div>
-</header>
+<header class="headbar"> ... </header>
 
 <div class="spacer"></div>
 
@@ -516,7 +403,7 @@ def page(content: str, title: str = APP_TITLE, user: Optional[User] = None, acti
 </main>
 </body>
 </html>
-""", title=title, user=user, active=active)
+""", title=title, user=user, active=active, content=content)
 
 # ============================================================
 # Auth minimale (cookie 'uid')
