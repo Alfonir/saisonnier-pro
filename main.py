@@ -545,9 +545,54 @@ def health() -> dict:
 # --- Home ---------------------------------------------------
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request, user: Optional[User] = Depends(current_user)):
-    print(">>>> HOME EXECUTED <<<<")   # Vérif console
-    content = "<h1>TEST HOME</h1>"
-    return page(content, APP_TITLE, user=user, active="")
+    content = """
+<section
+  style="display:grid;grid-template-columns:1.2fr .8fr;gap:28px;align-items:stretch;
+         padding:36px 0;border-radius:20px;
+         background:radial-gradient(120% 120% at 0% 0%, #f3f8ff 0%, #eef6ff 50%, #f7fbff 100%);">
+
+  <!-- Colonne gauche -->
+  <div style="background:#fff;border:1px solid rgba(15,23,42,.06);border-radius:18px;padding:28px;
+              box-shadow:0 12px 30px rgba(2,6,23,.08);display:flex;flex-direction:column;">
+    <h1 style="font-size:2.35rem;line-height:1.15;margin:0 0 .5rem;letter-spacing:-.02em;color:#0f172a">
+      Centralisez vos réservations.
+    </h1>
+    <p style="margin:.25rem 0 1.25rem;color:#475569;font-size:1.05rem">
+      Import iCal, calendrier consolidé, et planning ménage.
+    </p>
+    <div style="margin-top:auto">
+      <a href="/signup"
+         style="text-decoration:none;display:inline-flex;align-items:center;gap:.5rem;
+                padding:.9rem 1.2rem;border-radius:14px;font-weight:800;
+                background:linear-gradient(90deg,#0ea5e9,#22d3ee);color:#083344;
+                box-shadow:0 8px 24px rgba(14,165,233,.35)">
+        Créer un compte
+      </a>
+    </div>
+  </div>
+
+  <!-- Colonne droite -->
+  <div style="background:#0b1020;border-radius:18px;padding:24px;display:flex;flex-direction:column;
+              box-shadow:0 12px 30px rgba(2,6,23,.12);border:1px solid rgba(255,255,255,.06)">
+    <div style="color:#e2e8f0;font-weight:700;margin-bottom:16px">Déjà un compte ?</div>
+    <div style="flex:1;border-radius:14px;margin-bottom:16px;border:1px solid rgba(255,255,255,.06);
+                background:
+                  radial-gradient(40% 60% at 10% 10%, rgba(34,211,238,.35), transparent 60%),
+                  radial-gradient(40% 60% at 90% 30%, rgba(59,130,246,.30), transparent 60%),
+                  linear-gradient(135deg,#0f172a,#111827);
+                box-shadow:inset 0 1px 0 rgba(255,255,255,.06);"></div>
+    <a href="/login"
+       style="text-decoration:none;display:inline-flex;align-items:center;gap:.5rem;
+              padding:.85rem 1.15rem;border-radius:12px;font-weight:800;text-align:center;
+              background:#111827;color:#fff;border:1px solid rgba(255,255,255,.12)">
+      Se connecter
+    </a>
+  </div>
+
+</section>
+"""
+    print(">>>> HOME EXECUTED <<<<")
+    return page(content, APP_TITLE, user=user, active="properties")
 
 # --- Signup / Login / Logout --------------------------------
 @app.get("/signup", response_class=HTMLResponse)
