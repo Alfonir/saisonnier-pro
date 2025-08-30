@@ -448,7 +448,17 @@ def page(content: str, title: str = APP_TITLE, user: Optional[User] = None, acti
     /* Layouts / cards / hero */
     .grid{display:grid;gap:24px}
     @media(min-width:900px){ .grid{grid-template-columns:1.1fr .9fr} }
-    .hero{padding:32px 0}
+    /* Hero en 2 colonnes (responsive) */
+.hero{
+  display:grid;
+  grid-template-columns:1.1fr .9fr;
+  gap:24px;
+  align-items:stretch;
+  padding:32px 0;
+}
+@media (max-width: 900px){
+  .hero{ grid-template-columns:1fr; }
+}
     .card{
       background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow); padding:28px;
       border:1px solid rgba(15,23,42,.06);
