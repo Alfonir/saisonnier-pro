@@ -546,23 +546,90 @@ def health() -> dict:
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request, user: Optional[User] = Depends(current_user)):
     content = """
-<div class="hero"
-     style="display:grid;grid-template-columns:1.1fr .9fr;gap:24px;align-items:stretch;padding:32px 0">
-  <div class="card" style="display:flex;flex-direction:column;">
-    <h1>Centralisez vos réservations.</h1>
-    <p class="lead">Import iCal, calendrier consolidé, et planning ménage.</p>
-    <div style="margin-top:auto">
-      <a href="/signup" class="btn primary">Créer un compte</a>
+<!-- HERO PRO autonome, responsive, sans dépendances externes -->
+<section
+  style="display:grid;grid-template-columns:1.2fr .8fr;gap:28px;align-items:stretch;padding:36px 0;
+         background:radial-gradient(120% 120% at 0% 0%, #f3f8ff 0%, #eef6ff 50%, #f7fbff 100%);
+         border-radius:20px;">
+  <!-- Colonne gauche : message + CTA -->
+  <div style="background:#fff;border:1px solid rgba(15,23,42,.06);border-radius:18px;padding:28px;
+              box-shadow:0 12px 30px rgba(2,6,23,.08);display:flex;flex-direction:column;">
+    <div style="display:inline-flex;gap:.5rem;align-items:center;margin-bottom:.75rem;">
+      <span style="width:10px;height:10px;border-radius:999px;background:#22d3ee;display:inline-block"></span>
+      <span style="font-size:.9rem;font-weight:700;color:#0ea5e9;">Nouveau</span>
+    </div>
+
+    <h1 style="font-size:2.25rem;line-height:1.15;margin:0 0 .5rem;letter-spacing:-.02em;color:#0f172a">
+      Centralisez vos réservations
+    </h1>
+    <p style="margin:.25rem 0 1.25rem;color:#475569;font-size:1.05rem">
+      Import iCal, calendrier consolidé, suivi des revenus, et planning ménage — tout au même endroit.
+    </p>
+
+    <ul style="margin:0 0 1rem;padding:0;list-style:none;display:grid;gap:.5rem;color:#0f172a">
+      <li style="display:flex;gap:.6rem;align-items:center">
+        <span style="width:18px;height:18px;border-radius:5px;background:#e0f7fb;display:inline-block"></span>
+        Import automatique des .ics (Airbnb / Booking)
+      </li>
+      <li style="display:flex;gap:.6rem;align-items:center">
+        <span style="width:18px;height:18px;border-radius:5px;background:#e0f7fb;display:inline-block"></span>
+        Calendrier multi-logements
+      </li>
+      <li style="display:flex;gap:.6rem;align-items:center">
+        <span style="width:18px;height:18px;border-radius:5px;background:#e0f7fb;display:inline-block"></span>
+        Export CSV comptabilité
+      </li>
+    </ul>
+
+    <div style="margin-top:auto;display:flex;gap:.6rem;flex-wrap:wrap">
+      <a href="/signup"
+         style="text-decoration:none;display:inline-flex;align-items:center;gap:.5rem;
+                padding:.9rem 1.2rem;border-radius:14px;font-weight:800;
+                background:linear-gradient(90deg,#0ea5e9,#22d3ee);color:#083344;
+                box-shadow:0 8px 24px rgba(14,165,233,.35)">Créer un compte</a>
+
+      <a href="/login"
+         style="text-decoration:none;display:inline-flex;align-items:center;gap:.5rem;
+                padding:.9rem 1.2rem;border-radius:14px;font-weight:800;
+                background:#0b1020;color:#fff;border:1px solid rgba(15,23,42,.12);
+                box-shadow:0 6px 18px rgba(2,6,23,.20)">Se connecter</a>
     </div>
   </div>
 
-  <div class="card" style="display:flex;flex-direction:column;">
-    <div class="lead">Déjà un compte ?</div>
-    <div style="margin-top:auto">
-      <a href="/login" class="btn dark">Se connecter</a>
+  <!-- Colonne droite : carte “Déjà un compte ?” + visuel -->
+  <div style="background:#0b1020;border-radius:18px;padding:0;
+              box-shadow:0 12px 30px rgba(2,6,23,.12);position:relative;overflow:hidden;
+              border:1px solid rgba(255,255,255,.06)">
+    <div style="padding:24px 24px 12px;color:#e2e8f0;font-weight:700;opacity:.9">
+      Déjà un compte ?
+    </div>
+
+    <!-- “illustration” simple 100% CSS -->
+    <div style="height:220px;margin:0 24px 24px;border-radius:14px;
+                background:
+                  radial-gradient(40% 60% at 10% 10%, rgba(34,211,238,.35), transparent 60%),
+                  radial-gradient(40% 60% at 90% 30%, rgba(59,130,246,.30), transparent 60%),
+                  linear-gradient(135deg,#0f172a,#111827);
+                border:1px solid rgba(255,255,255,.06);
+                box-shadow:inset 0 1px 0 rgba(255,255,255,.06);"></div>
+
+    <div style="padding:0 24px 24px">
+      <a href="/login"
+         style="text-decoration:none;display:inline-flex;align-items:center;gap:.5rem;
+                padding:.85rem 1.15rem;border-radius:12px;font-weight:800;
+                background:#111827;color:#fff;border:1px solid rgba(255,255,255,.12)">
+        Se connecter
+      </a>
     </div>
   </div>
-</div>
+
+  <!-- Responsive : passe en 1 colonne sous 960px -->
+  <style>
+    @media (max-width: 960px){
+      section[style*="grid-template-columns"]{ grid-template-columns:1fr !important; }
+    }
+  </style>
+</section>
     """
     return page(content, APP_TITLE, user=user, active="properties")
 
