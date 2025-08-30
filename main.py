@@ -545,13 +545,8 @@ def health() -> dict:
 # --- Home ---------------------------------------------------
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request, user: Optional[User] = Depends(current_user)):
-    content = """
-    <div style="padding:24px;border:2px dashed #0ea5e9;border-radius:12px;background:#f0f9ff">
-      <h1 style="margin:0 0 .5rem">TEST HOME</h1>
-      <p>Si tu vois ce bloc, le rendu du <code>content</code> fonctionne ✅.</p>
-      <p>On pourra remettre le “hero pro” juste après.</p>
-    </div>
-    """
+    print(">>>> HOME EXECUTED <<<<")   # Vérif console
+    content = "<h1>TEST HOME</h1>"
     return page(content, APP_TITLE, user=user, active="")
 
 # --- Signup / Login / Logout --------------------------------
