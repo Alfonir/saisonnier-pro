@@ -563,9 +563,7 @@ async def home(request: Request, user: Optional[User] = Depends(current_user)):
     </div>
   </div>
 </div>
-"""
-
-    # important: on place le contenu dans <main class="container"> via page()
+    """
     return page(content, APP_TITLE, user=user, active="properties")
 
 # --- Signup / Login / Logout --------------------------------
