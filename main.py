@@ -1300,10 +1300,10 @@ async def reservation_edit_post(res_id: int, request: Request, user: "User" = De
             .first()
         )
         if not res:
-            return HTMLResponse(
-                page("<div class='container'><div class='card'>Réservation introuvable.</div></div>", APP_TITLE, user=user),
-                status_code=404,
-            )
+           return HTMLResponse(
+    page(ui_notice("Réservation introuvable.", title="Réservation", tone="error"), APP_TITLE, user=user),
+    status_code=404
+)
 
         # Vérifie que le logement cible appartient bien à l'utilisateur
         prop = (
