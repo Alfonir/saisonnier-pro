@@ -912,7 +912,10 @@ async def properties_add(request: Request, user: User = Depends(current_user), d
     ical_url = (form.get("ical_url") or "").strip()
 
     if not title:
-        return HTMLResponse(page("<div class='container'><div class='card'>Le titre est requis.</div></div>", APP_TITLE, user=user), status_code=400)
+        return HTMLResponse(
+    page(ui_notice("Le titre est requis.", title="Logement", tone="error"), APP_TITLE, user=user),
+    status_code=400
+)
 
     if ical_url and not validate_ical_url(ical_url):
         return HTMLResponse(page("<div class='container'><div class='card'>URL iCal invalide. Vérifie le lien public .ics.</div></div>", APP_TITLE, user=user), status_code=400)
@@ -956,7 +959,10 @@ async def properties_edit(prop_id: int, request: Request, user: User = Depends(c
     ical_url = (form.get("ical_url") or "").strip()
 
     if not title:
-        return HTMLResponse(page("<div class='container'><div class='card'>Le titre est requis.</div></div>", APP_TITLE, user=user), status_code=400)
+        return HTMLResponse(
+    page(ui_notice("Le titre est requis.", title="Logement", tone="error"), APP_TITLE, user=user),
+    status_code=400
+)
 
     if ical_url and not validate_ical_url(ical_url):
         return HTMLResponse(page("<div class='container'><div class='card'>URL iCal invalide. Vérifie le lien public .ics.</div></div>", APP_TITLE, user=user), status_code=400)
