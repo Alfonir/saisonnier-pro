@@ -1383,8 +1383,15 @@ async def sync_all(user: User = Depends(current_user), db: Session = Depends(get
             imported += 1
     db.commit()
 
-    return HTMLResponse(page(f"<div class='container'><div class='card'>Import terminé : {imported} réservation(s) ajoutée(s).</div></div>", APP_TITLE, user=user))
-
+    return HTMLResponse(
+    page(
+        ui_notice(f"Import terminé : {imported} réservation(s) ajoutée(s).",
+                  title="Import iCal",
+                  tone="success"),
+        APP_TITLE,
+        user=user
+    )
+)
 
 # --- Calendrier simple ------------------------------------------------------
 @app.get("/calendar", response_class=HTMLResponse)
