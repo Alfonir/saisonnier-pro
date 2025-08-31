@@ -692,10 +692,7 @@ async def signup_post(
         # email déjà pris ?
         exists = db.query(User).filter(func.lower(User.email) == email_clean).first()
         if exists:
-            return HTMLResponse(
-                page("<div class='container'><div class='card'>Email déjà utilisé.</div></div>", APP_TITLE),
-                status_code=400
-            )
+            return HTMLResponse(page(ui_notice("Cet email est déjà utilisé. Essaie de te connecter.", title="Compte existant"), APP_TITLE), status_code=400)
 
         u = User(email=email_clean, name=name_clean, password=hash_password(pwd))
         db.add(u)
