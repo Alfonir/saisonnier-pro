@@ -704,7 +704,10 @@ async def signup_post(
 )
 
     if not pwd:
-        return HTMLResponse(page(ui_notice("Le mot de passe est requis.", title="Mot de passe manquant"), APP_TITLE), status_code=400)
+        return HTMLResponse(
+    page(ui_notice("Mot de passe requis.", title="Inscription", tone="error"), APP_TITLE),
+    status_code=400
+)
 
     db = SessionLocal()
     try:
