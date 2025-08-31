@@ -385,6 +385,28 @@ BASE_HEAD = """
 </style>
 """
 
+def ui_notice(message: str, title: str = "Information", tone: str = "info") -> str:
+    colors = {
+        "success": ("#10b981", "rgba(16,185,129,.12)"),
+        "info":    ("#0ea5e9", "rgba(14,165,233,.12)"),
+        "warning": ("#f59e0b", "rgba(245,158,11,.12)"),
+        "error":   ("#ef4444", "rgba(239,68,68,.12)"),
+    }
+    color, bg = colors.get(tone, colors["info"])
+    return f"""
+    <div class="container">
+      <div class="card" style="border-left:6px solid {color}">
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div style="width:10px;height:10px;border-radius:999px;background:{color};margin-top:8px"></div>
+          <div>
+            <div style="font-weight:800;color:{color};margin-bottom:.25rem">{title}</div>
+            <div style="background:{bg};padding:.6rem .8rem;border-radius:10px">{message}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    """
+
 def page(content: str, title: str = APP_TITLE, user: Optional[User] = None, active: str = "") -> str:
     return render_str("""
 <!doctype html>
