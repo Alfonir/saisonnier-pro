@@ -1344,9 +1344,9 @@ async def reservation_delete_confirm(res_id: int, user: "User" = Depends(current
         )
         if not res:
             return HTMLResponse(
-                page("<div class='container'><div class='card'>Réservation introuvable.</div></div>", APP_TITLE, user=user),
-                status_code=404,
-            )
+    page(ui_notice("Réservation introuvable.", title="Réservation", tone="error"), APP_TITLE, user=user),
+    status_code=404
+)
 
         prop_title = getattr(res.property, "title", "") or ""
         nights = max(0, (res.end_date - res.start_date).days)
