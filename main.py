@@ -704,10 +704,8 @@ async def signup_post(
 
     except IntegrityError:
         db.rollback()
-        return HTMLResponse(
-            page("<div class='container'><div class='card'>Ce compte existe déjà.</div></div>", APP_TITLE),
-            status_code=400
-        )
+        return HTMLResponse(page(ui_notice("Ce compte existe déjà. Essaie avec « Mot de passe oublié » (plus tard) ou connecte-toi.", title="Compte existant"), APP_TITLE), status_code=400)
+
     except Exception as e:
         # Renvoie bien un code 500 en cas d’exception réelle
         return HTMLResponse(
