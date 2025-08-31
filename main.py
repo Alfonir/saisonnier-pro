@@ -687,23 +687,53 @@ async def signup_post(
 async def login_get(request: Request, user: Optional[User] = Depends(current_user)):
     if user:
         return RedirectResponse("/properties", status_code=303)
+
     content = """
     <div class="container">
-      <div class="card" style="max-width:480px; margin:0 auto;">
-        <h2 class="text-xl font-semibold mb-2">Connexion</h2>
-        <form method="post" action="/login" autocomplete="on">
-  <label>Email</label>
-  <input name="email" type="email" autocomplete="username" required />
+      <div style="
+        max-width: 640px; margin: 0 auto;
+        background:#fff; border:1px solid rgba(15,23,42,.06);
+        border-radius:18px; padding:28px; box-shadow:0 18px 40px rgba(2,6,23,.08);
+      ">
+        <h2 style="font-size:2rem; font-weight:800; margin:0 0 1.25rem; letter-spacing:-.02em; color:#0f172a">
+          Connexion
+        </h2>
 
-  <label class="mt-6">Mot de passe</label>
-  <input name="password" type="password" autocomplete="current-password" required />
+        <form method="post" action="/login" autocomplete="on" style="display:grid; gap:14px">
+          <div style="display:grid; gap:.5rem">
+            <label style="font-weight:600; color:#0f172a">Email</label>
+            <input name="email" type="email" required
+                   style="width:100%; border:1px solid #e2e8f0; border-radius:12px; padding:.8rem .9rem; outline:0"
+                   onfocus="this.style.boxShadow='0 0 0 4px rgba(14,165,233,.25)'; this.style.borderColor='#0ea5e9'"
+                   onblur="this.style.boxShadow='none'; this.style.borderColor='#e2e8f0'"/>
+          </div>
 
-  <button class="btn mt-6" type="submit">Se connecter</button>
-</form>
+          <div style="display:grid; gap:.5rem">
+            <label style="font-weight:600; color:#0f172a">Mot de passe</label>
+            <input name="password" type="password" required
+                   style="width:100%; border:1px solid #e2e8f0; border-radius:12px; padding:.8rem .9rem; outline:0"
+                   onfocus="this.style.boxShadow='0 0 0 4px rgba(14,165,233,.25)'; this.style.borderColor='#0ea5e9'"
+                   onblur="this.style.boxShadow='none'; this.style.borderColor='#e2e8f0'"/>
+          </div>
+
+          <div style="display:flex; gap:.6rem; margin-top:.5rem">
+            <button type="submit"
+              style="appearance:none; border:0; cursor:pointer; font-weight:800; border-radius:14px;
+                     padding:.9rem 1.2rem; color:#fff; background:#0b1020;
+                     border:1px solid rgba(15,23,42,.12); box-shadow:0 6px 18px rgba(2,6,23,.20)">
+              Se connecter
+            </button>
+            <a href="/signup"
+               style="display:inline-flex; align-items:center; padding:.85rem 1.1rem; border-radius:12px;
+                      border:1px solid rgba(15,23,42,.12); color:#0f172a; text-decoration:none;">
+              Créer un compte
+            </a>
+          </div>
+        </form>
       </div>
     </div>
     """
-    return page(content, APP_TITLE, user=None)
+    return page(content, APP_TITLE, user=None, active="")
 
 @app.post("/login")
 async def login_post(
