@@ -918,7 +918,10 @@ async def properties_add(request: Request, user: User = Depends(current_user), d
 )
 
     if ical_url and not validate_ical_url(ical_url):
-        return HTMLResponse(page("<div class='container'><div class='card'>URL iCal invalide. Vérifie le lien public .ics.</div></div>", APP_TITLE, user=user), status_code=400)
+       return HTMLResponse(
+    page(ui_notice("URL iCal invalide. Vérifie le lien public .ics.", title="Logement", tone="warning"), APP_TITLE, user=user),
+    status_code=400
+)
 
     p = Property(title=title, ical_url=ical_url, owner_id=user.id)
     db.add(p)
