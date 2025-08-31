@@ -1148,9 +1148,9 @@ async def reservation_new_post(request: Request, user: "User" = Depends(current_
         )
         if not prop:
             return HTMLResponse(
-                page("<div class='container'><div class='card'>Logement invalide.</div></div>", APP_TITLE, user=user),
-                status_code=400,
-            )
+    page(ui_notice("Logement invalide.", title="Réservation", tone="error"), APP_TITLE, user=user),
+    status_code=400
+)
 
         res = Reservation(
             property_id = prop.id,
