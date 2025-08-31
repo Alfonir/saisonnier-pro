@@ -1313,9 +1313,9 @@ async def reservation_edit_post(res_id: int, request: Request, user: "User" = De
         )
         if not prop:
             return HTMLResponse(
-                page("<div class='container'><div class='card'>Logement invalide.</div></div>", APP_TITLE, user=user),
-                status_code=400,
-            )
+    page(ui_notice("Logement invalide.", title="Réservation", tone="error"), APP_TITLE, user=user),
+    status_code=400
+)
 
         # Mise à jour des champs
         res.property_id = prop.id
