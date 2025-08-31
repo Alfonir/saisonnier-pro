@@ -809,7 +809,10 @@ async def login_post(
     pwd = (password or "").strip()
 
     if not email_clean or not pwd:
-        return HTMLResponse(page(ui_notice("Email et mot de passe requis.", title="Champs requis"), APP_TITLE), status_code=400)
+        return HTMLResponse(
+    page(ui_notice("Email et mot de passe requis.", title="Connexion", tone="error"), APP_TITLE),
+    status_code=400
+)
 
     db = SessionLocal()
     try:
