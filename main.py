@@ -562,26 +562,62 @@ async def home(request: Request, user: Optional[User] = Depends(current_user)):
 async def signup_get(request: Request, user: Optional[User] = Depends(current_user)):
     if user:
         return RedirectResponse("/properties", status_code=303)
+
     content = """
     <div class="container">
-      <div class="card" style="max-width:480px; margin:0 auto;">
-        <h2 class="text-xl font-semibold mb-2">Créer un compte</h2>
-        <form method="post" action="/signup" autocomplete="off">
-  <label>Email</label>
-  <input name="email" type="email" autocomplete="username" value="" required />
+      <div style="
+        max-width: 760px; margin: 0 auto;
+        background:#fff; border:1px solid rgba(15,23,42,.06);
+        border-radius:18px; padding:28px; box-shadow:0 18px 40px rgba(2,6,23,.08);
+      ">
+        <h2 style="font-size:2rem; font-weight:800; margin:0 0 1.25rem; letter-spacing:-.02em; color:#0f172a">
+          Créer un compte
+        </h2>
 
-  <label class="mt-6">Nom</label>
-  <input name="name" type="text" autocomplete="name" value="" />
+        <form method="post" action="/signup" autocomplete="off" style="display:grid; gap:14px">
+          <div style="display:grid; gap:.5rem">
+            <label style="font-weight:600; color:#0f172a">Email</label>
+            <input name="email" type="email" required
+                   style="width:100%; border:1px solid #e2e8f0; border-radius:12px; padding:.8rem .9rem; outline:0"
+                   onfocus="this.style.boxShadow='0 0 0 4px rgba(14,165,233,.25)'; this.style.borderColor='#0ea5e9'"
+                   onblur="this.style.boxShadow='none'; this.style.borderColor='#e2e8f0'"/>
+          </div>
 
-  <label class="mt-6">Mot de passe</label>
-  <input name="password" type="password" autocomplete="new-password" value="" required />
+          <div style="display:grid; gap:.5rem">
+            <label style="font-weight:600; color:#0f172a">Nom</label>
+            <input name="name" type="text"
+                   style="width:100%; border:1px solid #e2e8f0; border-radius:12px; padding:.8rem .9rem; outline:0"
+                   onfocus="this.style.boxShadow='0 0 0 4px rgba(14,165,233,.25)'; this.style.borderColor='#0ea5e9'"
+                   onblur="this.style.boxShadow='none'; this.style.borderColor='#e2e8f0'"/>
+          </div>
 
-  <button class="btn btn-accent mt-6" type="submit">Créer</button>
-</form>
+          <div style="display:grid; gap:.5rem">
+            <label style="font-weight:600; color:#0f172a">Mot de passe</label>
+            <input name="password" type="password" required
+                   style="width:100%; border:1px solid #e2e8f0; border-radius:12px; padding:.8rem .9rem; outline:0"
+                   onfocus="this.style.boxShadow='0 0 0 4px rgba(14,165,233,.25)'; this.style.borderColor='#0ea5e9'"
+                   onblur="this.style.boxShadow='none'; this.style.borderColor='#e2e8f0'"/>
+          </div>
+
+          <div style="display:flex; gap:.6rem; margin-top:.5rem">
+            <button type="submit"
+              style="appearance:none; border:0; cursor:pointer; font-weight:800; border-radius:14px;
+                     padding:.9rem 1.2rem; color:#083344;
+                     background:linear-gradient(90deg,#0ea5e9,#22d3ee);
+                     box-shadow:0 8px 22px rgba(14,165,233,.35)">
+              Créer mon compte
+            </button>
+            <a href="/login"
+               style="display:inline-flex; align-items:center; padding:.85rem 1.1rem; border-radius:12px;
+                      border:1px solid rgba(15,23,42,.12); color:#0f172a; text-decoration:none;">
+              J’ai déjà un compte
+            </a>
+          </div>
+        </form>
       </div>
     </div>
     """
-    return page(content, APP_TITLE, user=None)
+    return page(content, APP_TITLE, user=None, active="")
 
 from sqlalchemy import text, func
 from sqlalchemy.exc import IntegrityError, OperationalError, ProgrammingError
