@@ -785,10 +785,7 @@ async def login_post(
         # lookup insensible à la casse
         user = db.query(User).filter(func.lower(User.email) == email_clean).first()
         if not user:
-            return HTMLResponse(
-                page("<div class='container'><div class='card'>Identifiants invalides.</div></div>", APP_TITLE),
-                status_code=400,
-            )
+            return HTMLResponse(page(ui_notice("Identifiants invalides. Vérifie ton email et ton mot de passe.", title="Connexion impossible"), APP_TITLE), status_code=400)
 
         # vérif compat (hash/legacy) + migration éventuelle vers hash
         if verify_password(pwd, user.password):
@@ -800,10 +797,7 @@ async def login_post(
             resp.set_cookie("uid", str(user.id), httponly=True, samesite="lax")
             return resp
 
-        return HTMLResponse(
-            page("<div class='container'><div class='card'>Identifiants invalides.</div></div>", APP_TITLE),
-            status_code=400,
-        )
+            return HTMLResponse(page(ui_notice("Identifiants invalides. Vérifie ton email et ton mot de passe.", title="Connexion impossible"), APP_TITLE), status_code=400)
 
     finally:
         db.close()
