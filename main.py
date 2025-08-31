@@ -1128,9 +1128,10 @@ async def reservation_new_post(request: Request, user: "User" = Depends(current_
         ed_dt = date.fromisoformat(ed)
     except Exception:
         return HTMLResponse(
-            page("<div class='container'><div class='card'>Dates invalides.</div></div>", APP_TITLE, user=user),
-            status_code=400,
-        )
+    page(ui_notice("Dates invalides.", title="Réservation", tone="error"), APP_TITLE, user=user),
+    status_code=400
+)
+
     if ed_dt <= sd_dt:
         return HTMLResponse(
             page("<div class='container'><div class='card'>La date de fin doit être après la date de début.</div></div>", APP_TITLE, user=user),
