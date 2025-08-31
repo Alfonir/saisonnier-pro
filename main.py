@@ -698,7 +698,10 @@ async def signup_post(
     pwd         = (password or "").strip()
 
     if not email_clean or "@" not in email_clean:
-        return HTMLResponse(page(ui_notice("Email invalide.", title="Vérifie ton email"), APP_TITLE), status_code=400)
+        return HTMLResponse(
+    page(ui_notice("Email invalide.", title="Inscription", tone="error"), APP_TITLE),
+    status_code=400
+)
 
     if not pwd:
         return HTMLResponse(page(ui_notice("Le mot de passe est requis.", title="Mot de passe manquant"), APP_TITLE), status_code=400)
