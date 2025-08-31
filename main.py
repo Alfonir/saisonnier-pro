@@ -979,7 +979,10 @@ async def properties_edit(prop_id: int, request: Request, user: User = Depends(c
 
     p = db.query(Property).filter(Property.id == prop_id, Property.owner_id == user.id).first()
     if not p:
-        return HTMLResponse(page("<div class='container'><div class='card'>Logement introuvable.</div></div>", APP_TITLE, user=user), status_code=404)
+        return HTMLResponse(
+    page(ui_notice("Logement introuvable.", title="Logement", tone="error"), APP_TITLE, user=user),
+    status_code=404
+)
 
     p.title = title
     p.ical_url = ical_url
