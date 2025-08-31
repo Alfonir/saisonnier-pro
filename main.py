@@ -468,13 +468,13 @@ def page(content: str, title: str = APP_TITLE, user: Optional[User] = None, acti
 <body>
 <header class="headbar">
   <div class="container" style="display:flex;align-items:center;justify-content:space-between;padding:.8rem 0;">
-    <div class="logo">
-      <span class="logo-mark"></span>
-      <div>
-        <div style="font-weight:800">{{ APP_NAME }}</div>
-        <div style="font-size:.78rem;color:var(--muted);margin-top:-2px">{{ APP_TAGLINE }}</div>
-      </div>
-    </div>
+    <a class="logo" href="/" aria-label="Aller à l’accueil">
+  <span class="logo-mark"></span>
+  <div>
+    <div style="font-weight:800">{{ APP_NAME }}</div>
+    <div style="font-size:.78rem;color:var(--muted);margin-top:-2px">{{ APP_TAGLINE }}</div>
+  </div>
+</a>
 
     <nav class="topnav">
       <div class="nav-group">
