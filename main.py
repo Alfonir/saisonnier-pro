@@ -1407,11 +1407,8 @@ async def sync_all(user: User = Depends(current_user), db: Session = Depends(get
 
     return HTMLResponse(
     page(
-        ui_notice(f"Import terminé : {imported} réservation(s) ajoutée(s).",
-                  title="Import iCal",
-                  tone="success"),
-        APP_TITLE,
-        user=user
+        ui_notice(f"Import terminé : {imported} réservation(s) ajoutée(s).", title="Import iCal", tone="success"),
+        APP_TITLE, user=user
     )
 )
 
