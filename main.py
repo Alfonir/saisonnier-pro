@@ -1385,7 +1385,7 @@ async def reservation_delete(res_id: int, user: "User" = Depends(current_user)):
         )
         if not res:
             return HTMLResponse(
-    page(ui_notice("Réservation introuvable.", title="Réservation", tone="error"), APP_TITLE, user=user),
+    page(ui_notice("Réservation introuvable.", title="Suppression", tone="error"), APP_TITLE, user=user),
     status_code=404
 )
 
