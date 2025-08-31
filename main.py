@@ -482,6 +482,48 @@ def page(content: str, title: str = APP_TITLE, user: Optional[User] = None, acti
 </body>
 </html>
 """, title=title, user=user, active=active, content=content)
+    
+# --- UI helper : carte de notification (succès / erreur / info) -------------
+def ui_notice(
+    message: str,
+    title: str = "Oups…",
+    tone: str = "error",           # "error" | "success" | "info"
+) -> str:
+    colors = {
+        "error":  {"bg":"#fff1f2","bd":"#fecdd3","ink":"#7f1d1d","chip":"#fecaca"},
+        "success":{"bg":"#ecfdf5","bd":"#bbf7d0","ink":"#064e3b","chip":"#a7f3d0"},
+        "info":   {"bg":"#eff6ff","bd":"#bfdbfe","ink":"#0c4a6e","chip":"#dbeafe"},
+    }
+    c = colors.get(tone, colors["info"])
+    return f"""
+    <div class="container">
+      <div style="
+        max-width: 760px; margin: 0 auto;
+        background:#fff; border:1px solid rgba(15,23,42,.06);
+        border-radius:18px; padding:24px; box-shadow:0 18px 40px rgba(2,6,23,.08);
+      ">
+        <div style="
+          background:{c['bg']}; border:1px solid {c['bd']}; border-radius:14px; padding:16px 18px;
+        ">
+          <div style="display:flex; align-items:center; gap:.6rem; margin-bottom:.35rem">
+            <span style="display:inline-block; padding:.25rem .55rem; border-radius:999px;
+                         background:{c['chip']}; font-weight:800; font-size:.8rem; color:{c['ink']}">
+              { 'Erreur' if tone=='error' else 'Succès' if tone=='success' else 'Info' }
+            </span>
+            <strong style="color:{c['ink']}; font-weight:800">{title}</strong>
+          </div>
+          <div style="color:{c['ink']}">{message}</div>
+          <div style="margin-top:12px">
+            <a href="javascript:history.back()" style="
+               display:inline-flex; align-items:center; gap:.45rem;
+               padding:.6rem .9rem; border-radius:12px; text-decoration:none;
+               border:1px solid rgba(15,23,42,.12); color:#0f172a;
+            ">Retour</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    """
 
 # ============================================================
 # Auth minimale (cookie 'uid')
