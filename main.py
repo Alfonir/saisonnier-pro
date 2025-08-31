@@ -709,9 +709,10 @@ async def signup_post(
     except Exception as e:
         # Renvoie bien un code 500 en cas d’exception réelle
         return HTMLResponse(
-            page(f"<div class='container'><div class='card'>Erreur serveur pendant l’inscription.<br><small>{type(e).__name__}: {esc(str(e))}</small></div></div>", APP_TITLE),
-            status_code=500
-        )
+    page(ui_notice(f"Erreur serveur pendant l’inscription.<br><small>{esc(type(e).__name__)}: {esc(str(e))}</small>", title="Désolé…", tone="error"), APP_TITLE),
+    status_code=500
+)
+
     finally:
         db.close()
 
