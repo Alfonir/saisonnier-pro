@@ -511,15 +511,13 @@ def health() -> dict:
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request, user: Optional[User] = Depends(current_user)):
     content = """
-<section
-  style="display:grid;grid-template-columns:1.2fr .8fr;gap:28px;align-items:stretch;
-         padding:36px 0;border-radius:20px;
-         background:radial-gradient(120% 120% at 0% 0%, #f3f8ff 0%, #eef6ff 50%, #f7fbff 100%);">
-
-  <!-- Colonne gauche -->
-  <div style="background:#fff;border:1px solid rgba(15,23,42,.06);border-radius:18px;padding:28px;
-              box-shadow:0 12px 30px rgba(2,6,23,.08);display:flex;flex-direction:column;">
-    <h1 style="font-size:2.35rem;line-height:1.15;margin:0 0 .5rem;letter-spacing:-.02em;color:#0f172a">
+<div class="hero" style="display:grid;grid-template-columns:1.1fr .9fr;gap:28px;align-items:stretch;padding:36px 0">
+  
+  <!-- Bloc gauche -->
+  <div style="background:#fff;border-radius:18px;padding:28px;
+              box-shadow:0 10px 25px rgba(2,6,23,.06);
+              border:1px solid rgba(15,23,42,.06);display:flex;flex-direction:column;">
+    <h1 style="font-size:2.25rem;line-height:1.15;margin:0 0 .5rem;letter-spacing:-.02em;color:#0f172a">
       Centralisez vos réservations.
     </h1>
     <p style="margin:.25rem 0 1.25rem;color:#475569;font-size:1.05rem">
@@ -536,14 +534,13 @@ async def home(request: Request, user: Optional[User] = Depends(current_user)):
     </div>
   </div>
 
-   <!-- Colonne droite : carte claire -->
+  <!-- Bloc droit -->
   <div style="background:#fff;border-radius:18px;padding:28px;
               box-shadow:0 10px 25px rgba(2,6,23,.06);
               border:1px solid rgba(15,23,42,.06);display:flex;flex-direction:column;justify-content:space-between">
-    <div style="font-size:1.1rem;font-weight:600;color:#0f172a;margin-bottom:1rem">
+    <div style="font-size:1.2rem;font-weight:600;color:#0f172a;margin-bottom:1rem">
       Déjà un compte ?
     </div>
-
     <div style="margin-top:auto">
       <a href="/login"
          style="text-decoration:none;display:inline-flex;align-items:center;gap:.5rem;
@@ -553,6 +550,7 @@ async def home(request: Request, user: Optional[User] = Depends(current_user)):
       </a>
     </div>
   </div>
+</div>
 
 </section>
 """
