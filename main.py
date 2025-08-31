@@ -968,7 +968,10 @@ async def properties_edit(prop_id: int, request: Request, user: User = Depends(c
 )
 
     if ical_url and not validate_ical_url(ical_url):
-        return HTMLResponse(page("<div class='container'><div class='card'>URL iCal invalide. Vérifie le lien public .ics.</div></div>", APP_TITLE, user=user), status_code=400)
+        return HTMLResponse(
+    page(ui_notice("URL iCal invalide. Vérifie le lien public .ics.", title="Logement", tone="warning"), APP_TITLE, user=user),
+    status_code=400
+)
 
     p = db.query(Property).filter(Property.id == prop_id, Property.owner_id == user.id).first()
     if not p:
