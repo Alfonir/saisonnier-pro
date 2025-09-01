@@ -382,29 +382,23 @@ BASE_HEAD = """
     color:#083344; background:linear-gradient(90deg, var(--brand-start), var(--brand-end));
   }
   .btn.dark{ background:#0b1020; color:#fff }
-  /* Filigrane logo en fond */
-body {
-  position: relative; /* crée un contexte pour le ::before */
-}
-
+  /* Filigrane logo couvrant toute la page */
 body::before {
   content: "";
   position: fixed;
-  /* place-le un peu plus bas que le header pour qu’on le voie */
-  top: 55%;
-  left: 50%;
-  width: 900px;          /* plus grand */
-  height: 900px;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   background: url('/static/logo-sf.png') no-repeat center center;
-  background-size: contain;
-  opacity: 0.08;         /* plus visible (0.05 était trop faible) */
-  transform: translate(-50%, -50%);
+  background-size: 80%;   /* couvre presque toute la largeur, tu peux mettre 100% si besoin */
+  opacity: 0.04;          /* transparence légère (ajuste entre 0.02 et 0.06 selon rendu) */
   z-index: 0;
-  pointer-events: none;  /* ne bloque pas les clics */
+  pointer-events: none;   /* ne bloque pas les clics */
 }
 
-/* s’assure que le contenu passe au-dessus */
-header, main {
+/* S'assure que le contenu est par-dessus */
+header, main, footer {
   position: relative;
   z-index: 1;
 }
