@@ -483,7 +483,7 @@ def page(content: str, title: str = APP_TITLE, user: Optional[User] = None, acti
     .btn:focus{outline:3px solid var(--ring); outline-offset:2px}
     .btn.primary{color:#083344; background:linear-gradient(90deg, var(--brand-start), var(--brand-end));}
     .btn.dark{ background:#0b1020; color:#fff }
-   /* Filigrane géant, couleurs visibles */
+  /* Filigrane géant, couleurs visibles, plus bas */
 html, body { height: 100%; }
 body { position: relative; }
 
@@ -493,9 +493,9 @@ body::before {
   inset: 0;
   background-image: url('/static/logo-sf.png');
   background-repeat: no-repeat;
-  background-position: center 65%;     /* plus bas que 55% */
-  background-size: 120vmin;            /* bien grand */
-  opacity: 0.05;                       /* un peu moins transparent */
+  background-position: center 80%;   /* descend plus bas (65% → 80%) */
+  background-size: 120vmin;          /* taille inchangée */
+  opacity: 0.05;                     /* visible mais discret */
   pointer-events: none;
   z-index: 0;
 }
