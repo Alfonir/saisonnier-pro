@@ -487,18 +487,11 @@ def page(content: str, title: str = APP_TITLE, user: Optional[User] = None, acti
 html, body { height: 100%; }
 body { position: relative; }
 
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  background-image: url('/static/logo-sf.png');
-  background-repeat: no-repeat;
-  background-position: center 58%;    /* un poil sous le header */
-  background-size: 100vmin;           /* toujours bien grand (carré côté le plus petit de l’écran) */
-  opacity: 0.035;                     /* très léger ; joue entre 0.02 et 0.05 */
-  filter: saturate(0) brightness(1.25); /* décolore et éclaircit => moins intrusif */
-  pointer-events: none;
-  z-index: 0;
+body::before{
+  content:""; position:fixed; inset:0;
+  background:url('/static/logo-sf.png') no-repeat center 55% / 120vmin; /* encore plus grand */
+  opacity:0.03; filter:saturate(0) brightness(1.3);
+  pointer-events:none; z-index:0;
 }
 
 header, main, footer { position: relative; z-index: 1; }
