@@ -493,9 +493,9 @@ body::before {
   inset: 0;
   background-image: url('/static/logo-sf.png');
   background-repeat: no-repeat;
-  background-position: center 80%;   /* descend plus bas (65% → 80%) */
-  background-size: 120vmin;          /* taille inchangée */
-  opacity: 0.05;                     /* visible mais discret */
+  background-position: center 600px;   /* logo centré, mais descendu de 600px */
+  background-size: 120vmin;            /* taille conservée */
+  opacity: 0.05;
   pointer-events: none;
   z-index: 0;
 }
