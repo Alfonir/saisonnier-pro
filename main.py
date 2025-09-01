@@ -489,8 +489,8 @@ body { position: relative; }
 
 body::before{
   content:""; position:fixed; inset:0;
-  background:url('/static/logo-sf.png') no-repeat center 55% / 120vmin; /* encore plus grand */
-  opacity:0.03; filter:saturate(0) brightness(1.3);
+  background:url('/static/logo-sf.png') no-repeat 78% 70% / 110vmin;
+  opacity:0.035; filter:saturate(0) brightness(1.25);
   pointer-events:none; z-index:0;
 }
 
