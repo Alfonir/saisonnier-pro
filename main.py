@@ -483,7 +483,7 @@ def page(content: str, title: str = APP_TITLE, user: Optional[User] = None, acti
     .btn:focus{outline:3px solid var(--ring); outline-offset:2px}
     .btn.primary{color:#083344; background:linear-gradient(90deg, var(--brand-start), var(--brand-end));}
     .btn.dark{ background:#0b1020; color:#fff }
-    /* Filigrane géant, très discret */
+   /* Filigrane géant, couleurs gardées */
 html, body { height: 100%; }
 body { position: relative; }
 
@@ -493,10 +493,9 @@ body::before {
   inset: 0;
   background-image: url('/static/logo-sf.png');
   background-repeat: no-repeat;
-  background-position: center 58%;    /* un poil sous le header */
-  background-size: 100vmin;           /* toujours bien grand (carré côté le plus petit de l’écran) */
-  opacity: 0.035;                     /* très léger ; joue entre 0.02 et 0.05 */
-  filter: saturate(0) brightness(1.25); /* décolore et éclaircit => moins intrusif */
+  background-position: center 55%;     /* centré un peu sous le header */
+  background-size: 120vmin;            /* plus grand que 100vmin */
+  opacity: 0.025;                      /* couleurs mais très transparent */
   pointer-events: none;
   z-index: 0;
 }
