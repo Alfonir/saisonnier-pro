@@ -382,6 +382,24 @@ BASE_HEAD = """
     color:#083344; background:linear-gradient(90deg, var(--brand-start), var(--brand-end));
   }
   .btn.dark{ background:#0b1020; color:#fff }
+  body::before {
+    content: "";
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    width: 600px; /* taille à ajuster */
+    height: 600px;
+    background: url('/static/logo-sf.png') no-repeat center center;
+    background-size: contain;
+    opacity: 0.05; /* transparence */
+    transform: translate(-50%, -50%);
+    z-index: 0;
+  }
+
+  header, main {
+    position: relative;
+    z-index: 1;
+  }
 </style>
 """
 
