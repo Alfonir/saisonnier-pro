@@ -469,7 +469,8 @@ def page(content: str, title: str = APP_TITLE, user: Optional[User] = None, acti
 <header class="headbar">
   <div class="container" style="display:flex;align-items:center;justify-content:space-between;padding:.8rem 0;">
     <a class="logo" href="/" aria-label="Aller à l’accueil">
-  <span class="logo-mark"></span>
+  <img src="/static/logo-sf.png" alt="StayFlow logo"
+       style="width:34px;height:34px;border-radius:10px;display:inline-block;box-shadow:var(--shadow-soft);object-fit:contain" />
   <div>
     <div style="font-weight:800">{{ APP_NAME }}</div>
     <div style="font-size:.78rem;color:var(--muted);margin-top:-2px">{{ APP_TAGLINE }}</div>
