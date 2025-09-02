@@ -8,3 +8,4 @@ python-multipart
 pydantic[email]
 ics
 python-dateutil
+passlib[bcrypt]
