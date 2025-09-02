@@ -1544,6 +1544,23 @@ async def sync_all(user: User = Depends(current_user), db: Session = Depends(get
     )
 )
 
+# --- Sync iCal en arrière-plan ----------------------------------------------
+@app.get("/sync_async")
+async def sync_async(user: User = Depends(current_user)):
+    if not user:
+        return RedirectResponse("/login", status_code=303)
+
+    # Lance l’import dans un thread (ne bloque pas la requête)
+    threading.Thread(
+        target=import_icals_for_user, 
+        args=(user.id,), 
+        daemon=True
+    ).start()
+
+    return HTMLResponse(
+        page(ui_notice("Import en arrière-plan lancé.", title="Import iCal", tone="info"), APP_TITLE, user=user)
+    )
+
 # --- Calendrier simple ------------------------------------------------------
 @app.get("/calendar", response_class=HTMLResponse)
 async def calendar_view(request: Request, user: User = Depends(current_user), db: Session = Depends(get_db)):
