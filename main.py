@@ -48,23 +48,25 @@ def esc(s: str | None) -> str:
 SALT = "stayflow$2025"   # fixe; tu peux le mettre en env si tu veux
 
 def hash_password(p: str) -> str:
-    p = (p or "").strip()
-    return hashlib.sha256((SALT + p).encode("utf-8")).hexdigest()
-
-_HEX = set(string.hexdigits)
-
-def looks_like_sha256(s: str) -> bool:
-    return isinstance(s, str) and len(s) == 64 and all(c in _HEX for c in s)
+    """Hash moderne et salé pour stockage sécurisé."""
+    return bcrypt.hash((p or "").strip())
 
 def verify_password(input_password: str, stored: str) -> bool:
-    """Compat : accepte l'ancien stockage éventuel en clair, puis migre vers le hash."""
+    """Compat : accepte l'ancien stockage éventuel (sha256 ou clair), puis migre vers bcrypt au login."""
     if not stored:
         return False
-    # cas hash standard
+    raw = (input_password or "").strip()
+
+    # 1) Si ancien format sha256 → valider une fois contre l'ancien schéma
     if looks_like_sha256(stored):
-        return secrets.compare_digest(hash_password(input_password), stored)
-    # cas legacy (mot de passe en clair stocké)
-    return secrets.compare_digest((input_password or "").strip(), stored)
+        return secrets.compare_digest(hashlib.sha256((SALT + raw).encode("utf-8")).hexdigest(), stored)
+
+    # 2) Si ancien clair (rare) → compat
+    if not stored.startswith("$2b$") and not stored.startswith("$2a$"):
+        return secrets.compare_digest(raw, stored)
+
+    # 3) bcrypt (format moderne)
+    return bcrypt.verify(raw, stored)
 
 # ============================================================
 # Config appli
