@@ -1491,58 +1491,26 @@ async def reservation_delete(res_id: int, user: "User" = Depends(current_user)):
 
 # --- Sync iCal --------------------------------------------------------------
 @app.get("/sync")
-async def sync_all(user: User = Depends(current_user), db: Session = Depends(get_db)):
+async def sync_all(user: User = Depends(current_user)):
     if not user:
         return RedirectResponse("/login", status_code=303)
 
-    imported = 0
-    props = db.query(Property).filter(Property.owner_id == user.id, Property.ical_url != "").all()
-    for p in props:
-        if not validate_ical_url(p.ical_url):
-            continue
-        try:
-            with httpx.Client(timeout=15) as c:
-                r = c.get(p.ical_url, follow_redirects=True)
-                r.raise_for_status()
-                cal = IcsCalendar(r.text)
-        except Exception:
-            continue
-
-        for ev in cal.events:
-            # dates
-            try:
-                dt_start = ev.begin.date() if hasattr(ev.begin, "date") else dparse(str(ev.begin)).date()
-                dt_end = ev.end.date() if hasattr(ev.end, "date") else dparse(str(ev.end)).date()
-            except Exception:
-                continue
-
-            uid = str(ev.uid or f"{p.id}-{ev.begin}-{ev.end}")
-            already = db.query(Reservation).filter(
-                Reservation.property_id == p.id,
-                Reservation.external_uid == uid
-            ).first()
-            if already:
-                continue
-
-            guest = (ev.name or "").strip()
-            db.add(Reservation(
-                property_id=p.id,
-                source="ical",
-                guest_name=guest,
-                start_date=dt_start,
-                end_date=dt_end,
-                total_price=0.0,
-                external_uid=uid
-            ))
-            imported += 1
-    db.commit()
+    threading.Thread(
+        target=import_icals_for_user,
+        args=(user.id,),
+        daemon=True
+    ).start()
 
     return HTMLResponse(
-    page(
-        ui_notice(f"Import terminé : {imported} réservation(s) ajoutée(s).", title="Import iCal", tone="success"),
-        APP_TITLE, user=user
+        page(
+            ui_notice(
+                "Import lancé en arrière-plan. Revenez sur cette page dans 1–2 minutes.",
+                title="Sync iCal",
+                tone="info"
+            ),
+            APP_TITLE, user=user
+        )
     )
-)
 
 # --- Sync iCal en arrière-plan ----------------------------------------------
 @app.get("/sync_async")
