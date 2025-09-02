@@ -506,6 +506,7 @@ def page(
     title: str = APP_TITLE,
     user: Optional[User] = None,
     active: str = "",
+    show_private_nav: bool = True, 
 ) -> str:
     return render_str("""
 <!DOCTYPE html>
