@@ -501,8 +501,9 @@ def ui_notice(message: str, title: str = "Information", tone: str = "info") -> s
     </div>
     """
 
-def page(content: str, title: str, user=None, active="") -> str:
-    return f"""<!DOCTYPE html>
+def page(content: str, title: str = APP_TITLE, user: Optional[User] = None, active: str = "") -> str:
+    return render_str("""
+    <!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="utf-8">
