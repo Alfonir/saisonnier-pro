@@ -855,9 +855,9 @@ async def login_post(
 
     if not email_clean or not pwd:
         return HTMLResponse(
-    page(ui_notice("Email et mot de passe requis.", title="Connexion", tone="error"), APP_TITLE),
-    status_code=400
-)
+            page(ui_notice("Email et mot de passe requis.", title="Connexion", tone="error"), APP_TITLE),
+            status_code=400
+        )
 
     db = SessionLocal()
     try:
@@ -865,26 +865,24 @@ async def login_post(
         user = db.query(User).filter(func.lower(User.email) == email_clean).first()
         if not user:
             return HTMLResponse(
-    page(ui_notice("Identifiants invalides.", title="Connexion", tone="error"), APP_TITLE),
-    status_code=400
-)
+                page(ui_notice("Identifiants invalides.", title="Connexion", tone="error"), APP_TITLE),
+                status_code=400
+            )
 
-        # vérif compat (hash/legacy) + migration éventuelle vers hash
-       if verify_password(pwd, user.password):
-    # si pas encore en bcrypt → migrer maintenant
-    if not str(user.password).startswith("$2b$") and not str(user.password).startswith("$2a$"):
-        user.password = hash_password(pwd)
-        db.commit()
+        if verify_password(pwd, user.password):
+            # 🔐 migration silencieuse vers bcrypt si nécessaire
+            if not str(user.password).startswith("$2b$") and not str(user.password).startswith("$2a$"):
+                user.password = hash_password(pwd)
+                db.commit()
 
             resp = RedirectResponse("/properties", status_code=303)
             resp.set_cookie("uid", str(user.id), httponly=True, samesite="lax")
             return resp
-
+        else:
             return HTMLResponse(
-    page(ui_notice("Identifiants invalides.", title="Connexion", tone="error"), APP_TITLE),
-    status_code=400
-)
-
+                page(ui_notice("Identifiants invalides.", title="Connexion", tone="error"), APP_TITLE),
+                status_code=400
+            )
     finally:
         db.close()
 
