@@ -142,6 +142,55 @@ def overlaps(a_start: date, a_end: date, b_start: date, b_end: date) -> bool:
     # intervalle [start, end) — fin exclusive
     return a_start < b_end and b_start < a_end
 
+import threading
+
+def import_icals_for_user(user_id: int):
+    """Import .ics pour un utilisateur en tâche de fond."""
+    db = SessionLocal()
+    try:
+        imported = 0
+        props = db.query(Property).filter(Property.owner_id == user_id, Property.ical_url != "").all()
+        for p in props:
+            if not validate_ical_url(p.ical_url):
+                continue
+            try:
+                with httpx.Client(timeout=15) as c:
+                    r = c.get(p.ical_url, follow_redirects=True)
+                    r.raise_for_status()
+                    cal = IcsCalendar(r.text)
+            except Exception:
+                continue
+
+            for ev in cal.events:
+                try:
+                    dt_start = ev.begin.date() if hasattr(ev.begin, "date") else dparse(str(ev.begin)).date()
+                    dt_end   = ev.end.date()   if hasattr(ev.end, "date")   else dparse(str(ev.end)).date()
+                except Exception:
+                    continue
+
+                uid = str(ev.uid or f"{p.id}-{ev.begin}-{ev.end}")
+                already = db.query(Reservation).filter(
+                    Reservation.property_id == p.id,
+                    Reservation.external_uid == uid
+                ).first()
+                if already:
+                    continue
+
+                guest = (ev.name or "").strip()
+                db.add(Reservation(
+                    property_id=p.id,
+                    source="ical",
+                    guest_name=guest,
+                    start_date=dt_start,
+                    end_date=dt_end,
+                    total_price=0.0,
+                    external_uid=uid
+                ))
+                imported += 1
+        db.commit()
+    finally:
+        db.close()
+
 # ============================================================
 # Modèles SQLAlchemy
 # ============================================================
