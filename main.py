@@ -503,14 +503,14 @@ def ui_notice(message: str, title: str = "Information", tone: str = "info") -> s
 
 def page(content: str, title: str = APP_TITLE, user: Optional[User] = None, active: str = "") -> str:
     return render_str("""
-    <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="utf-8">
-  <title>{title}</title>
+  <title>{{ title }}</title>
   <link rel="stylesheet" href="/static/style.css">
   <style>
-    :root {{
+    :root {
       --bg:#f7fafc;           /* claire */
       --ink:#0f172a;          /* texte principal */
       --muted:#64748b;        /* texte secondaire */
@@ -522,77 +522,74 @@ def page(content: str, title: str = APP_TITLE, user: Optional[User] = None, acti
       --shadow-soft:0 6px 20px rgba(2, 6, 23, .06);
       --brand-start:#0ea5e9;  /* sky-500 */
       --brand-end:#22d3ee;    /* cyan-400 */
-    }}
-    *{{box-sizing:border-box}}
-    html,body{{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Inter",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}}
-    a{{color:inherit;text-decoration:none}}
-    .container{{max-width:1200px;margin:0 auto;padding:0 20px}}
+    }
+    * { box-sizing:border-box }
+    html,body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.5 "Inter",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif }
+    a { color:inherit; text-decoration:none }
+    .container { max-width:1200px; margin:0 auto; padding:0 20px }
 
     /* Header sticky + blur */
-    .headbar{{
+    .headbar {
       position:sticky; top:0; z-index:50; backdrop-filter:saturate(140%) blur(12px);
       background:linear-gradient(180deg, rgba(255,255,255,.75), rgba(255,255,255,.35));
       border-bottom:1px solid rgba(15,23,42,.06);
-    }}
-    .logo{{
-      display:flex;align-items:center;gap:.75rem;font-weight:800;font-size:1.05rem;letter-spacing:.2px;
-    }}
-    .logo-mark{{
-      width:34px;height:34px;border-radius:10px;display:inline-block;box-shadow:var(--shadow-soft);
+    }
+    .logo {
+      display:flex; align-items:center; gap:.75rem; font-weight:800; font-size:1.05rem; letter-spacing:.2px;
+    }
+    .logo-mark {
+      width:34px; height:34px; border-radius:10px; display:inline-block; box-shadow:var(--shadow-soft);
       background:radial-gradient(120% 120% at 0% 0%, var(--brand-end) 0%, var(--brand-start) 60%, #2563eb 100%);
-    }}
+    }
 
     /* NAV */
-    .topnav{{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}}
-    .nav-group{{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap}}
-    .pill{{
-      display:inline-flex;align-items:center;gap:.5rem;padding:.55rem .9rem;border-radius:999px;
-      background:rgba(99,102,241,.06);border:1px solid rgba(15,23,42,.06);font-weight:700;
+    .topnav { display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap }
+    .nav-group { display:flex; gap:.6rem; align-items:center; flex-wrap:wrap }
+    .pill {
+      display:inline-flex; align-items:center; gap:.5rem; padding:.55rem .9rem; border-radius:999px;
+      background:rgba(99,102,241,.06); border:1px solid rgba(15,23,42,.06); font-weight:700;
       transition:.2s; box-shadow:0 1px 0 rgba(255,255,255,.4) inset;
-    }}
-    .pill:hover{{transform:translateY(-1px);box-shadow:var(--shadow-soft)}}
-    .pill.active{{background:linear-gradient(90deg, var(--brand-start), var(--brand-end));color:#fff;border-color:transparent}}
-    .pill-accent{{background:#0b1020;color:#fff}}
+    }
+    .pill:hover { transform:translateY(-1px); box-shadow:var(--shadow-soft) }
+    .pill.active { background:linear-gradient(90deg, var(--brand-start), var(--brand-end)); color:#fff; border-color:transparent }
+    .pill-accent { background:#0b1020; color:#fff }
 
-    .spacer{{height:18px}}
+    .spacer { height:18px }
 
     /* Layouts / cards / hero */
-    .grid{{display:grid;gap:24px}}
-    .card{{
+    .grid { display:grid; gap:24px }
+    .card {
       background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow); padding:28px;
       border:1px solid rgba(15,23,42,.06);
-    }}
-    h1{{font-size:2.35rem; line-height:1.15; margin:0 0 .5rem; letter-spacing:-.02em}}
-    p.lead{{color:var(--muted); margin:.25rem 0 1.2rem}}
+    }
+    h1 { font-size:2.35rem; line-height:1.15; margin:0 0 .5rem; letter-spacing:-.02em }
+    p.lead { color:var(--muted); margin:.25rem 0 1.2rem }
 
     /* Hero en 2 colonnes */
-    .hero{{
+    .hero {
       display:grid;
       grid-template-columns:1.1fr .9fr;
       gap:24px;
       align-items:stretch;
       padding:32px 0;
-    }}
-    @media (max-width: 900px){{
-      .hero{{ grid-template-columns:1fr; }}
-    }}
+    }
+    @media (max-width: 900px) {
+      .hero { grid-template-columns:1fr; }
+    }
 
     /* Buttons */
-    .btn{{
+    .btn {
       appearance:none; border:0; cursor:pointer; font-weight:800; border-radius:14px;
       padding:.9rem 1.2rem; box-shadow:var(--shadow-soft); transition:.15s;
-    }}
-    .btn:focus{{outline:3px solid var(--ring); outline-offset:2px}}
-    .btn.primary{{
-      color:#083344; background:linear-gradient(90deg, var(--brand-start), var(--brand-end));
-    }}
-    .btn.dark{{ background:#0b1020; color:#fff }}
+    }
+    .btn:focus { outline:3px solid var(--ring); outline-offset:2px }
+    .btn.primary { color:#083344; background:linear-gradient(90deg, var(--brand-start), var(--brand-end)); }
+    .btn.dark { background:#0b1020; color:#fff }
 
     /* === Filigrane géant en fond (logo) === */
-    html, body {{ height: 100%; }}
-    body {{ position: relative; }}
-
-    body::before {{
+    html, body { height: 100%; }
+    body { position: relative; }
+    body::before {
       content: "";
       position: fixed;
       inset: 0;
@@ -603,13 +600,12 @@ def page(content: str, title: str = APP_TITLE, user: Optional[User] = None, acti
       opacity: 0.05;
       pointer-events: none;
       z-index: 0;
-    }}
-
-    header, main, footer {{ position: relative; z-index: 1; }}
+    }
+    header, main, footer { position: relative; z-index: 1; }
   </style>
 </head>
 <body>
-  <header class="headbar"> 
+<header class="headbar">
   <div class="container" style="display:flex;align-items:center;justify-content:space-between;padding:.8rem 0;">
     <a class="logo" href="/" aria-label="Aller à l’accueil">
       <img src="/static/logo-sf.png" alt="StayFlow logo"
@@ -622,13 +618,14 @@ def page(content: str, title: str = APP_TITLE, user: Optional[User] = None, acti
 
     <nav class="topnav">
       {% if user %}
-  <div class="nav-group">
-    <a class="pill {% if active=='properties' %}active{% endif %}" href="/properties">Logements</a>
-    <a class="pill {% if active=='calendar' %}active{% endif %}" href="/calendar">Calendrier</a>
-    <a class="pill {% if active=='reservations' %}active{% endif %}" href="/reservations">Réservations</a>
-    <a class="pill {% if active=='sync' %}active{% endif %}" href="/sync">Sync</a>
-  </div>
-{% endif %}
+      <div class="nav-group">
+        <a class="pill {% if active=='properties' %}active{% endif %}" href="/properties">Logements</a>
+        <a class="pill {% if active=='calendar' %}active{% endif %}" href="/calendar">Calendrier</a>
+        <a class="pill {% if active=='reservations' %}active{% endif %}" href="/reservations">Réservations</a>
+        <a class="pill {% if active=='sync' %}active{% endif %}" href="/sync">Sync</a>
+      </div>
+      {% endif %}
+
       <div class="nav-group">
         {% if user %}
           <a class="pill" href="/logout">Déconnexion</a>
@@ -640,9 +637,14 @@ def page(content: str, title: str = APP_TITLE, user: Optional[User] = None, acti
     </nav>
   </div>
 </header>
-  <main class="container">{content}</main>
+
+<main class="container">
+  {{ content | safe }}
+</main>
+
 </body>
-</html>"""
+</html>
+""", title=title, user=user, active=active, content=content)
     
 # --- UI helper : carte de notification (succès / erreur / info) -------------
 def ui_notice(
