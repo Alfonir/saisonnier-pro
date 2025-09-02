@@ -1025,23 +1025,69 @@ async def properties_list(request: Request, user: User = Depends(current_user), 
 async def properties_add_form(request: Request, user: User = Depends(current_user)):
     if not user:
         return RedirectResponse("/login", status_code=303)
+
     content = """
     <div class="container">
-      <div class="card" style="max-width:640px; margin:0 auto;">
-        <h2 class="text-xl font-semibold mb-2">Ajouter un logement</h2>
-        <form method="post" action="/properties/add">
-          <label>Titre</label>
-          <input name="title" required />
+      <div class="card" style="max-width:760px;margin:0 auto;">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;gap:1rem;margin-bottom:8px">
+          <h2 class="text-xl font-semibold" style="font-size:1.8rem;letter-spacing:-.02em">Ajouter un logement</h2>
+          <a href="/properties" class="pill" style="text-decoration:none;">Retour à la liste</a>
+        </div>
+        <p class="lead" style="margin-top:0;color:#64748b">
+          Renseigne un titre (ex. “Studio Mer, Nice”) et, si tu en as un, l’URL iCal publique (Airbnb/Booking, etc.).
+        </p>
 
-          <label class="mt-6">URL iCal (optionnel)</label>
-          <input name="ical_url" placeholder="https://... .ics" />
+        <form method="post" action="/properties/add" autocomplete="off" style="display:grid;gap:18px;margin-top:14px">
+          <!-- Titre -->
+          <div style="display:grid;gap:.5rem">
+            <label for="title" style="font-weight:700;color:#0f172a">Titre<span style="color:#ef4444"> *</span></label>
+            <input id="title" name="title" type="text" required autofocus
+              placeholder="Ex. Appartement Centre — Lyon"
+              style="
+                width:100%; padding:.9rem 1rem; border:1px solid #e2e8f0; border-radius:12px;
+                background:#fff; outline:0; transition:.15s;
+                box-shadow:0 1px 0 rgba(255,255,255,.4) inset;
+              "
+              onfocus="this.style.boxShadow='0 0 0 4px rgba(14,165,233,.20)'; this.style.borderColor='#0ea5e9'"
+              onblur="this.style.boxShadow='0 1px 0 rgba(255,255,255,.4) inset'; this.style.borderColor='#e2e8f0'"/>
+            <small style="color:#64748b">Nom interne visible seulement par toi.</small>
+          </div>
 
-          <button class="btn btn-accent mt-6" type="submit">Créer</button>
+          <!-- URL iCal -->
+          <div style="display:grid;gap:.5rem">
+            <label for="ical_url" style="font-weight:700;color:#0f172a">URL iCal <span style="color:#64748b;font-weight:600">(optionnel)</span></label>
+            <input id="ical_url" name="ical_url" type="url"
+              inputmode="url" placeholder="https://… .ics"
+              pattern="https?://.*\\.ics(\\?.*)?$"
+              title="Doit être une URL se terminant par .ics"
+              style="
+                width:100%; padding:.9rem 1rem; border:1px solid #e2e8f0; border-radius:12px;
+                background:#fff; outline:0; transition:.15s;
+                box-shadow:0 1px 0 rgba(255,255,255,.4) inset;
+              "
+              onfocus="this.style.boxShadow='0 0 0 4px rgba(14,165,233,.20)'; this.style.borderColor='#0ea5e9'"
+              onblur="this.style.boxShadow='0 1px 0 rgba(255,255,255,.4) inset'; this.style.borderColor='#e2e8f0'"/>
+            <small style="color:#64748b">
+              Colle ici le lien <b>.ics</b> public (Airbnb/Booking). Tu pourras le modifier plus tard.
+            </small>
+          </div>
+
+          <!-- Actions -->
+          <div style="display:flex;gap:.6rem;margin-top:.25rem">
+            <button type="submit" class="btn primary"
+              style="font-weight:800;padding:.9rem 1.1rem;border-radius:14px;box-shadow:0 8px 24px rgba(14,165,233,.25);">
+              Créer le logement
+            </button>
+            <a href="/properties" class="btn"
+              style="background:#0b102005;border:1px solid rgba(15,23,42,.12);color:#0f172a;text-decoration:none;padding:.9rem 1.1rem;border-radius:14px;">
+              Annuler
+            </a>
+          </div>
         </form>
       </div>
     </div>
     """
-    return page(content, APP_TITLE, user=user)
+    return page(content, APP_TITLE, user=user, active="properties")
 
 @app.post("/properties/add")
 async def properties_add(request: Request, user: User = Depends(current_user), db: Session = Depends(get_db)):
