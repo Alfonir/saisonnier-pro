@@ -608,7 +608,35 @@ def page(content: str, title: str, user=None, active="") -> str:
   </style>
 </head>
 <body>
-  <header class="headbar"> ... </header>
+  <header class="headbar"> 
+  <div class="container" style="display:flex;align-items:center;justify-content:space-between;padding:.8rem 0;">
+    <a class="logo" href="/" aria-label="Aller à l’accueil">
+      <img src="/static/logo-sf.png" alt="StayFlow logo"
+           style="width:44px;height:44px;border-radius:12px;display:inline-block;box-shadow:var(--shadow-soft);object-fit:contain" />
+      <div>
+        <div style="font-weight:800">{{ APP_NAME }}</div>
+        <div style="font-size:.78rem;color:var(--muted);margin-top:-2px">{{ APP_TAGLINE }}</div>
+      </div>
+    </a>
+
+    <nav class="topnav">
+      <div class="nav-group">
+        <a class="pill {% if active=='properties' %}active{% endif %}" href="/properties">Logements</a>
+        <a class="pill {% if active=='calendar' %}active{% endif %}" href="/calendar">Calendrier</a>
+        <a class="pill {% if active=='reservations' %}active{% endif %}" href="/reservations">Réservations</a>
+        <a class="pill {% if active=='sync' %}active{% endif %}" href="/sync">Sync</a>
+      </div>
+      <div class="nav-group">
+        {% if user %}
+          <a class="pill" href="/logout">Déconnexion</a>
+        {% else %}
+          <a class="pill" href="/login">Connexion</a>
+          <a class="pill pill-accent" href="/signup">Créer un compte</a>
+        {% endif %}
+      </div>
+    </nav>
+  </div>
+</header>
   <main class="container">{content}</main>
 </body>
 </html>"""
