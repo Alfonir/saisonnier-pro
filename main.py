@@ -620,12 +620,14 @@ def page(content: str, title: str, user=None, active="") -> str:
     </a>
 
     <nav class="topnav">
-      <div class="nav-group">
-        <a class="pill {% if active=='properties' %}active{% endif %}" href="/properties">Logements</a>
-        <a class="pill {% if active=='calendar' %}active{% endif %}" href="/calendar">Calendrier</a>
-        <a class="pill {% if active=='reservations' %}active{% endif %}" href="/reservations">Réservations</a>
-        <a class="pill {% if active=='sync' %}active{% endif %}" href="/sync">Sync</a>
-      </div>
+      {% if user %}
+  <div class="nav-group">
+    <a class="pill {% if active=='properties' %}active{% endif %}" href="/properties">Logements</a>
+    <a class="pill {% if active=='calendar' %}active{% endif %}" href="/calendar">Calendrier</a>
+    <a class="pill {% if active=='reservations' %}active{% endif %}" href="/reservations">Réservations</a>
+    <a class="pill {% if active=='sync' %}active{% endif %}" href="/sync">Sync</a>
+  </div>
+{% endif %}
       <div class="nav-group">
         {% if user %}
           <a class="pill" href="/logout">Déconnexion</a>
