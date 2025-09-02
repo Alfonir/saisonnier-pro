@@ -571,19 +571,20 @@ def page(
         </div>
       </a>
 
-      <nav class="topnav">
-        {% if user %}
-          <div class="nav-group">
-            <a class="pill {% if active=='properties' %}active{% endif %}" href="/properties">Logements</a>
-            <a class="pill {% if active=='calendar' %}active{% endif %}" href="/calendar">Calendrier</a>
-            <a class="pill {% if active=='reservations' %}active{% endif %}" href="/reservations">Réservations</a>
-            <a class="pill {% if active=='sync' %}active{% endif %}" href="/sync">Sync</a>
-          </div>
-          <div class="nav-group">
-            <a class="pill" href="/logout">Déconnexion</a>
-          </div>
-        {% endif %}
-      </nav>
+     <nav class="topnav">
+  {% if show_private_nav and user %}
+    <div class="nav-group">
+      <a class="pill {% if active=='properties' %}active{% endif %}" href="/properties">Logements</a>
+      <a class="pill {% if active=='calendar' %}active{% endif %}" href="/calendar">Calendrier</a>
+      <a class="pill {% if active=='reservations' %}active{% endif %}" href="/reservations">Réservations</a>
+      <a class="pill {% if active=='sync' %}active{% endif %}" href="/sync">Sync</a>
+    </div>
+    <div class="nav-group">
+      <a class="pill" href="/logout">Déconnexion</a>
+    </div>
+  {% endif %}
+</nav>
+
     </div>
   </header>
 
