@@ -596,6 +596,7 @@ def page(
     content=content,
     user=user,
     active=active,
+    show_private_nav=show_private_nav,
     APP_NAME=APP_NAME,
     APP_TAGLINE=APP_TAGLINE,
 )
