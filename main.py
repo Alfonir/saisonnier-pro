@@ -260,6 +260,11 @@ app = FastAPI(title=APP_TITLE)
 def _init_db():
     try:
         Base.metadata.create_all(bind=engine)
+        if DB_URL.startswith("sqlite"):
+            with engine.connect() as conn:
+                conn.exec_driver_sql("PRAGMA journal_mode=WAL;")
+                conn.exec_driver_sql("PRAGMA synchronous=NORMAL;")
+                conn.exec_driver_sql("PRAGMA foreign_keys=ON;")
     except Exception:
         pass
 
