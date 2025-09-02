@@ -463,12 +463,12 @@ body { position: relative; }
 body::before {
   content: "";
   position: fixed;
-  inset: 0; /* top/right/bottom/left:0 */
+  inset: 0;
   background-image: url('/static/logo-sf.png');
   background-repeat: no-repeat;
-  background-position: center center;
-  background-size: clamp(520px, 75vmin, 1400px); /* adapte selon écran */
-  opacity: 0.05;           /* très léger (ajuste 0.03–0.07) */
+  background-position: center 140px;   /* légèrement plus haut */
+  background-size: 120vmin;            /* taille identique */
+  opacity: 0.05;                       /* même visibilité */
   pointer-events: none;
   z-index: 0;
 }
