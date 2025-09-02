@@ -39,6 +39,8 @@ from sqlalchemy import text
 import html
 from textwrap import dedent
 
+from passlib.hash import bcrypt
+
 def esc(s: str | None) -> str:
     """Échappe &, <, > et " pour un usage sûr dans value=""."""
     return html.escape(s or "", quote=True)
