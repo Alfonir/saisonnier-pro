@@ -870,10 +870,11 @@ async def login_post(
 )
 
         # vérif compat (hash/legacy) + migration éventuelle vers hash
-        if verify_password(pwd, user.password):
-            if not looks_like_sha256(user.password):
-                user.password = hash_password(pwd)
-                db.commit()
+       if verify_password(pwd, user.password):
+    # si pas encore en bcrypt → migrer maintenant
+    if not str(user.password).startswith("$2b$") and not str(user.password).startswith("$2a$"):
+        user.password = hash_password(pwd)
+        db.commit()
 
             resp = RedirectResponse("/properties", status_code=303)
             resp.set_cookie("uid", str(user.id), httponly=True, samesite="lax")
