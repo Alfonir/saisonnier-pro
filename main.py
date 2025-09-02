@@ -41,6 +41,14 @@ from textwrap import dedent
 
 from passlib.hash import bcrypt
 
+import string, secrets, hashlib
+
+SALT = "stayflow$2025"  # garde ta valeur
+
+_HEX = set(string.hexdigits)
+def looks_like_sha256(s: str) -> bool:
+    return isinstance(s, str) and len(s) == 64 and all(c in _HEX for c in s)
+
 def esc(s: str | None) -> str:
     """Échappe &, <, > et " pour un usage sûr dans value=""."""
     return html.escape(s or "", quote=True)
