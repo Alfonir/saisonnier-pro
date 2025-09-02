@@ -237,6 +237,11 @@ class Reservation(Base):
 
     property = relationship("Property", back_populates="reservations")
 
+from sqlalchemy import Index
+Index("ix_res_start", Reservation.start_date)
+Index("ix_res_prop", Reservation.property_id)
+Index("ix_prop_owner", Property.owner_id)
+
 # --- Ownership helper ------------------------------------------------------
 def get_owned_property(db, user_id: int, prop_id: int) -> "Property | None":
     return db.query(Property).filter(
