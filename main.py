@@ -456,26 +456,25 @@ BASE_HEAD = """
     color:#083344; background:linear-gradient(90deg, var(--brand-start), var(--brand-end));
   }
   .btn.dark{ background:#0b1020; color:#fff }
-  /* Filigrane logo couvrant toute la page */
+/* === Filigrane géant en fond (logo) === */
+html, body { height: 100%; }
+body { position: relative; }
+
 body::before {
   content: "";
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: url('/static/logo-sf.png') no-repeat center center;
-  background-size: 80%;   /* couvre presque toute la largeur, tu peux mettre 100% si besoin */
-  opacity: 0.04;          /* transparence légère (ajuste entre 0.02 et 0.06 selon rendu) */
+  inset: 0; /* top/right/bottom/left:0 */
+  background-image: url('/static/logo-sf.png');
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: clamp(520px, 75vmin, 1400px); /* adapte selon écran */
+  opacity: 0.05;           /* très léger (ajuste 0.03–0.07) */
+  pointer-events: none;
   z-index: 0;
-  pointer-events: none;   /* ne bloque pas les clics */
 }
 
-/* S'assure que le contenu est par-dessus */
-header, main, footer {
-  position: relative;
-  z-index: 1;
-}
+/* le contenu passe au-dessus du filigrane */
+header, main, footer { position: relative; z-index: 1; }
 
 </style>
 """
