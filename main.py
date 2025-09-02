@@ -1100,15 +1100,23 @@ from fastapi.responses import HTMLResponse
 async def reservations_page(request: Request, user: "User" = Depends(current_user)):
     db = SessionLocal()
     try:
-        rows = (
+        page = max(1, int(request.query_params.get("page", 1)))
+        size = 50
+
+        base_q = (
             db.query(Reservation)
-            .join(Property, Reservation.property_id == Property.id)
-            .filter(Property.owner_id == user.id)
-            .order_by(Reservation.start_date.desc())
-            .all()
+              .join(Property, Reservation.property_id == Property.id)
+              .filter(Property.owner_id == user.id)
         )
 
-        # En-tête avec "Ajouter" + "Exporter CSV"
+        total = base_q.count()
+        rows = (
+            base_q.order_by(Reservation.start_date.desc())
+                  .limit(size)
+                  .offset((page - 1) * size)
+                  .all()
+        )
+
         header = """
         <div class="flex items-center justify-between mb-3">
           <h2 class="text-xl font-semibold">Réservations</h2>
@@ -1119,26 +1127,37 @@ async def reservations_page(request: Request, user: "User" = Depends(current_use
         </div>
         """
 
-        # Liste avec bouton "Modifier" par réservation
         items = []
         for r in rows:
             nights = (r.end_date - r.start_date).days if r.end_date and r.start_date else ""
-            prop_title = getattr(r.property, "title", "")
             items.append(
-    f"<li>{r.guest_name or '–'} — {r.start_date} → {r.end_date} "
-    f"({max(0, (r.end_date - r.start_date).days)} nuits) — <small>{getattr(r.property,'title','')}</small> "
-    f"<a class='badge' href='/reservations/{r.id}/edit'>Modifier</a> "
-    f"<a class='badge' style='background:#fee2e2;color:#991b1b' href='/reservations/{r.id}/delete'>Supprimer</a>"
-    f"</li>"
-)
+                f"<li>{esc(r.guest_name) or '–'} — {r.start_date} → {r.end_date} "
+                f"({max(0, (r.end_date - r.start_date).days)} nuits) — "
+                f"<small>{esc(getattr(r.property,'title',''))}</small> "
+                f"<a class='badge' href='/reservations/{r.id}/edit'>Modifier</a> "
+                f"<a class='badge' style='background:#fee2e2;color:#991b1b' href='/reservations/{r.id}/delete'>Supprimer</a>"
+                f"</li>"
+            )
 
         listing = "<ul>" + "\n".join(items) + "</ul>" if items else "<div class='text-gray-600'>Aucune réservation.</div>"
+
+        # Pagination links
+        last_page = max(1, (total + size - 1) // size)
+        prev_link = f"<a class='badge' href='/reservations?page={page-1}'>← Précédent</a>" if page > 1 else ""
+        next_link = f"<a class='badge' href='/reservations?page={page+1}'>Suivant →</a>" if page < last_page else ""
+        pager = f"""
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px">
+            <div>Page {page} / {last_page} — {total} réservation(s)</div>
+            <div style="display:flex;gap:.5rem">{prev_link}{next_link}</div>
+          </div>
+        """
 
         content = f"""
         <div class="container">
           <div class="card">
             {header}
             {listing}
+            {pager}
           </div>
         </div>
         """
