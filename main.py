@@ -65,15 +65,18 @@ def verify_password(input_password: str, stored: str) -> bool:
         return False
     raw = (input_password or "").strip()
 
-    # 1) Si ancien format sha256 → valider une fois contre l'ancien schéma
+    # 1) Ancien format sha256
     if looks_like_sha256(stored):
-        return secrets.compare_digest(hashlib.sha256((SALT + raw).encode("utf-8")).hexdigest(), stored)
+        return secrets.compare_digest(
+            hashlib.sha256((SALT + raw).encode("utf-8")).hexdigest(),
+            stored
+        )
 
-    # 2) Si ancien clair (rare) → compat
+    # 2) Ancien clair
     if not stored.startswith("$2b$") and not stored.startswith("$2a$"):
         return secrets.compare_digest(raw, stored)
 
-    # 3) bcrypt (format moderne)
+    # 3) bcrypt moderne
     return bcrypt.verify(raw, stored)
 
 # ============================================================
