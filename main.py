@@ -673,108 +673,139 @@ def health() -> dict:
 async def home(request: Request, user: Optional[User] = Depends(current_user)):
     content = """
 <!-- HERO -->
-<section class="hero">
-  <div class="card" style="display:flex;flex-direction:column">
-    <h1>Centralisez vos réservations.</h1>
-    <p class="lead">Import iCal, calendrier consolidé, et planning ménage.</p>
-    <div style="margin-top:auto">
-      <a href="/signup" class="btn primary" style="font-weight:800">Créer un compte</a>
-    </div>
-  </div>
-
-  <div class="card" style="display:grid;grid-template-rows:auto 1fr;gap:14px">
-    <div style="font-weight:700">Déjà un compte ?</div>
-    <div style="display:grid;grid-template-columns:1.3fr .7fr;gap:12px">
-      <div style="background:var(--surface);border:1px solid rgba(15,23,42,.06);border-radius:12px;padding:12px">
-        <div style="height:120px;border-radius:10px;background:linear-gradient(180deg,#e2f3ff,#f7fbff)"></div>
-        <div style="display:flex;gap:8px;margin-top:10px">
-          <div style="flex:1;height:8px;background:#e2e8f0;border-radius:999px"></div>
-          <div style="width:30%;height:8px;background:#e2e8f0;border-radius:999px"></div>
-        </div>
+<section class="container" style="margin:20px 0 10px">
+  <div class="card" style="display:grid;grid-template-columns:1.1fr .9fr;gap:22px;align-items:center">
+    <!-- Colonne gauche -->
+    <div>
+      <h1 style="margin:0 0 .35rem">Centralisez vos réservations.</h1>
+      <p class="lead" style="margin:.2rem 0 1.1rem">Import iCal, calendrier consolidé, et planning ménage.</p>
+      <div style="display:flex;gap:.6rem;flex-wrap:wrap">
+        <a href="/signup" class="btn primary" style="font-weight:800">Créer un compte</a>
+        <a href="/login" class="pill">Se connecter</a>
       </div>
-      <div style="display:grid;gap:10px">
-        <div style="background:#fff;border:1px solid rgba(15,23,42,.06);border-radius:12px;padding:12px">
-          <div style="font-size:.85rem;color:#64748b">Réservations du jour</div>
+      <div style="margin-top:.9rem;color:var(--muted);font-size:.9rem">Gratuit pour démarrer. Aucune carte requise.</div>
+    </div>
+
+    <!-- Colonne droite : carte login + 2 KPIs -->
+    <div style="display:grid;gap:12px">
+      <div class="card" style="padding:16px">
+        <div style="font-weight:700;margin-bottom:.35rem">Déjà un compte ?</div>
+        <a href="/login" class="btn" style="background:#0b1020;color:#fff">Se connecter</a>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="card" style="padding:16px">
+          <div style="font-size:.85rem;color:var(--muted)">Réservations du jour</div>
           <div style="font-weight:800;font-size:1.6rem">3</div>
         </div>
-        <div style="background:#fff;border:1px solid rgba(15,23,42,.06);border-radius:12px;padding:12px">
-          <div style="font-size:.85rem;color:#64748b">Taux d’occupation</div>
+        <div class="card" style="padding:16px">
+          <div style="font-size:.85rem;color:var(--muted)">Taux d’occupation</div>
           <div style="font-weight:800;font-size:1.6rem">82%</div>
         </div>
       </div>
     </div>
-    <div style="margin-top:10px">
-      <a href="/login" class="btn" style="background:#0b1020;color:#fff">Se connecter</a>
-    </div>
   </div>
 </section>
 
-<!-- KPI -->
+<!-- PREUVE SOCIALE / BÉNÉFICES RAPIDES -->
 <section class="container" style="margin-top:10px">
   <div class="card" style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
-    <div><div style="font-size:1.8rem;font-weight:800">+90&nbsp;jours</div><div style="color:var(--muted)">de planning visibles</div></div>
-    <div><div style="font-size:1.8rem;font-weight:800">0 conflit</div><div style="color:var(--muted)">détecté automatiquement</div></div>
-    <div><div style="font-size:1.8rem;font-weight:800">3&nbsp;min</div><div style="color:var(--muted)">pour démarrer</div></div>
-  </div>
-</section>
-
-<!-- OUTILS PRO -->
-<section class="container" style="margin-top:14px">
-  <div class="grid" style="grid-template-columns:repeat(3,1fr)">
-    <div class="card">
-      <div style="font-weight:800;margin-bottom:.4rem">Channel manager iCal</div>
-      <p class="lead" style="margin:0">Airbnb / Booking / Vrbo… agrégation & dédoublonnage des .ics.</p>
+    <div>
+      <div style="font-size:1.8rem;font-weight:800">+90&nbsp;jours</div>
+      <div style="color:var(--muted)">de planning visibles</div>
     </div>
-    <div class="card">
-      <div style="font-weight:800;margin-bottom:.4rem">Export CSV compta</div>
-      <p class="lead" style="margin:0">Montants, nuits, sources et logements en un clic.</p>
+    <div>
+      <div style="font-size:1.8rem;font-weight:800">0 conflit</div>
+      <div style="color:var(--muted)">détecté automatiquement</div>
     </div>
-    <div class="card">
-      <div style="font-weight:800;margin-bottom:.4rem">Planning ménage</div>
-      <p class="lead" style="margin:0">Fin de séjour = tâche automatique pour l’équipe.</p>
-    </div>
-    <div class="card">
-      <div style="font-weight:800;margin-bottom:.4rem">Alertes iCal</div>
-      <p class="lead" style="margin:0">URLs invalides, imports en échec, doublons repérés.</p>
-    </div>
-    <div class="card">
-      <div style="font-weight:800;margin-bottom:.4rem">Multi-comptes</div>
-      <p class="lead" style="margin:0">Partage d’accès (lecture/écriture) par rôle.</p>
-    </div>
-    <div class="card">
-      <div style="font-weight:800;margin-bottom:.4rem">Journal d’opérations</div>
-      <p class="lead" style="margin:0">Historique des imports et mods pour tracer qui fait quoi.</p>
+    <div>
+      <div style="font-size:1.8rem;font-weight:800">3&nbsp;min</div>
+      <div style="color:var(--muted)">pour démarrer</div>
     </div>
   </div>
 </section>
 
-<!-- INTÉGRATIONS -->
+<!-- FONCTIONNALITÉS PRINCIPALES -->
 <section class="container" style="margin-top:14px">
-  <div class="card" style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
-    <div style="font-weight:800">S’intègre en 1 clic avec vos OTA</div>
-    <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
-      <span class="pill">Airbnb iCal</span>
-      <span class="pill">Booking iCal</span>
-      <span class="pill">Vrbo iCal</span>
-      <span class="pill">Autre .ics</span>
+  <div class="card">
+    <h2 style="margin:0 0 .6rem">Fonctionnalités</h2>
+    <div class="grid" style="grid-template-columns:repeat(3,1fr)">
+      <div class="card">
+        <div style="font-weight:800;margin-bottom:.3rem">Channel manager iCal</div>
+        <p class="lead" style="margin:0">Airbnb / Booking / Vrbo… agrégation & dédoublonnage des .ics.</p>
+      </div>
+      <div class="card">
+        <div style="font-weight:800;margin-bottom:.3rem">Export CSV compta</div>
+        <p class="lead" style="margin:0">Montants, nuits, sources et logements en un clic.</p>
+      </div>
+      <div class="card">
+        <div style="font-weight:800;margin-bottom:.3rem">Planning ménage</div>
+        <p class="lead" style="margin:0">Fin de séjour = tâche automatique pour l’équipe.</p>
+      </div>
+      <div class="card">
+        <div style="font-weight:800;margin-bottom:.3rem">Alertes iCal</div>
+        <p class="lead" style="margin:0">URLs invalides, imports en échec, doublons repérés.</p>
+      </div>
+      <div class="card">
+        <div style="font-weight:800;margin-bottom:.3rem">Multi-comptes</div>
+        <p class="lead" style="margin:0">Partage d’accès (lecture/écriture) par rôle.</p>
+      </div>
+      <div class="card">
+        <div style="font-weight:800;margin-bottom:.3rem">Journal d’opérations</div>
+        <p class="lead" style="margin:0">Historique des imports et mods pour tracer qui fait quoi.</p>
+      </div>
     </div>
+  </div>
+</section>
+
+<!-- MINI APERÇU (dashboard) -->
+<section class="container" style="margin-top:14px">
+  <div class="card" style="display:grid;grid-template-columns:1.2fr .8fr;gap:16px;align-items:stretch">
+    <div class="card" style="background:var(--surface);border:1px solid rgba(15,23,42,.06);">
+      <div style="height:140px;border-radius:10px;background:linear-gradient(180deg,#e2f3ff,#f7fbff)"></div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <div style="flex:1;height:8px;background:#e2e8f0;border-radius:999px"></div>
+        <div style="width:30%;height:8px;background:#e2e8f0;border-radius:999px"></div>
+      </div>
+    </div>
+    <div style="display:grid;gap:12px">
+      <div class="card" style="padding:16px">
+        <div style="font-size:.9rem;color:var(--muted)">Arrivées / Départs aujourd’hui</div>
+        <div style="font-weight:800;font-size:1.4rem">2 / 1</div>
+      </div>
+      <div class="card" style="padding:16px">
+        <div style="font-size:.9rem;color:var(--muted)">Logements actifs</div>
+        <div style="font-weight:800;font-size:1.4rem">12</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COMMENT ÇA MARCHE -->
+<section class="container" style="margin-top:14px">
+  <div class="card">
+    <h2 style="margin:0 0 .6rem">Comment ça marche</h2>
+    <ol style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding-left:1.2rem;margin:0">
+      <li class="card"><b>Créez votre compte</b><br><span class="lead">30 s chrono.</span></li>
+      <li class="card"><b>Ajoutez vos liens iCal</b><br><span class="lead">Airbnb, Booking, Vrbo…</span></li>
+      <li class="card"><b>Planifiez</b><br><span class="lead">Calendrier unique, exports, ménage.</span></li>
+    </ol>
   </div>
 </section>
 
 <!-- FAQ -->
 <section class="container" style="margin-top:14px">
   <div class="card">
-    <h3 class="text-xl font-semibold">FAQ</h3>
-    <details style="margin-top:10px">
-      <summary style="cursor:pointer;font-weight:700">Est-ce que StayFlow modifie mes calendriers OTA&nbsp;?</summary>
+    <h2 style="margin:0 0 .6rem">FAQ</h2>
+    <details style="margin-top:8px">
+      <summary style="cursor:pointer;font-weight:700">Est-ce que StayFlow modifie mes calendriers OTA ?</summary>
       <p class="lead" style="margin:.5rem 0 0">Non, nous lisons vos liens iCal publics en lecture seule.</p>
     </details>
-    <details style="margin-top:10px">
-      <summary style="cursor:pointer;font-weight:700">Puis-je importer plusieurs liens pour un même logement&nbsp;?</summary>
+    <details style="margin-top:8px">
+      <summary style="cursor:pointer;font-weight:700">Puis-je importer plusieurs liens pour un même logement ?</summary>
       <p class="lead" style="margin:.5rem 0 0">Oui, les événements sont fusionnés et dédoublonnés automatiquement.</p>
     </details>
-    <details style="margin-top:10px">
-      <summary style="cursor:pointer;font-weight:700">Y a-t-il un export pour la comptabilité&nbsp;?</summary>
+    <details style="margin-top:8px">
+      <summary style="cursor:pointer;font-weight:700">Y a-t-il un export pour la comptabilité ?</summary>
       <p class="lead" style="margin:.5rem 0 0">Un export CSV complet est disponible à tout moment.</p>
     </details>
   </div>
@@ -784,7 +815,7 @@ async def home(request: Request, user: Optional[User] = Depends(current_user)):
 <section class="container" style="margin:16px 0 24px">
   <div class="card" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
     <div>
-      <div style="font-weight:800;font-size:1.25rem">Prêt à gagner du temps&nbsp;?</div>
+      <div style="font-weight:800;font-size:1.25rem">Prêt à gagner du temps ?</div>
       <div class="lead" style="margin:.2rem 0 0">Créez votre compte et ajoutez votre premier logement.</div>
     </div>
     <a href="/signup" class="btn primary" style="font-weight:800">Démarrer gratuitement</a>
