@@ -476,6 +476,80 @@ body::before {
 /* le contenu passe au-dessus du filigrane */
 header, main, footer { position: relative; z-index: 1; }
 
+/* ==== SOFT THEME – palette discrète & ombres légères =================== */
+:root{
+  /* Palette désaturée (bleu-gris) */
+  --bg:#f6f8fb;
+  --ink:#0f172a;
+  --muted:#6b7280;
+  --card:#ffffff;
+  --surface:#f2f5f9;
+
+  /* Accent doux */
+  --brand-start:#4f81c7;   /* bleu désaturé */
+  --brand-end:#7fb5d6;     /* bleu clair */
+  --ring:rgba(79,129,199,.25);
+
+  /* Rondeurs & ombres */
+  --radius:14px;
+  --shadow:0 8px 24px rgba(15,23,42,.06);
+  --shadow-soft:0 6px 18px rgba(15,23,42,.05);
+}
+
+/* Typo & titres un peu plus sages */
+h1{ font-size:2.05rem; letter-spacing:-.01em; }
+h2{ font-size:1.35rem; }
+.lead{ color:var(--muted); }
+
+/* Cartes */
+.card{
+  background:var(--card);
+  border:1px solid rgba(15,23,42,.08);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  padding:24px;
+}
+
+/* Pills (onglets/badges) plus neutres */
+.pill{
+  background:rgba(15,23,42,.04);
+  border:1px solid rgba(15,23,42,.08);
+  color:#0f172a;
+}
+.pill:hover{ transform:none; box-shadow:var(--shadow-soft); }
+.pill.active{
+  background:linear-gradient(90deg, var(--brand-start), var(--brand-end));
+  color:#0e2433;
+  border-color:transparent;
+}
+
+/* Boutons */
+.btn{
+  border-radius:12px;
+  font-weight:700;
+  box-shadow:var(--shadow-soft);
+}
+.btn.primary{
+  /* dégradé plus doux, texte sombre (meilleure lisibilité) */
+  background:linear-gradient(90deg, var(--brand-start), var(--brand-end));
+  color:#0b1f2f;
+}
+.btn.primary:hover{ filter:saturate(1.02) brightness(.98); }
+.btn.dark{ background:#0f172a; color:#fff; }
+
+/* Nav (si affichée ailleurs) */
+.topnav .pill{ background:rgba(15,23,42,.05); }
+
+/* Filigrane logo plus subtil et plus bas */
+body::before{
+  opacity:.035;
+  background-position:center 200px;
+  background-size:min(1200px, 78vmin);
+}
+
+/* Petits espacements uniformes entre sections de la home */
+.container + .container { margin-top:14px; }
+
 </style>
 """
 
