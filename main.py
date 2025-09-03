@@ -380,176 +380,55 @@ BASE_HEAD = """
 <script src="https://unpkg.com/htmx.org@1.9.12"></script>
 <style>
   :root{
-    --bg:#f7fafc;           /* claire */
-    --ink:#0f172a;          /* texte principal */
-    --muted:#64748b;        /* texte secondaire */
-    --card:#ffffff;         /* cartes */
-    --surface:#eff6ff;      /* surfaces pâles */
-    --ring:rgba(14,165,233,.35);
-    --radius:16px;
-    --shadow:0 10px 30px rgba(2, 6, 23, .08);
-    --shadow-soft:0 6px 20px rgba(2, 6, 23, .06);
-    --brand-start:#0ea5e9;  /* sky-500 */
-    --brand-end:#22d3ee;    /* cyan-400 */
+    --bg:#f6f8fb;
+    --ink:#0f172a;
+    --muted:#6b7280;
+    --card:#ffffff;
+    --surface:#f2f5f9;
+    --brand-start:#4f81c7;
+    --brand-end:#7fb5d6;
+    --ring:rgba(79,129,199,.25);
+    --radius:14px;
+    --shadow:0 8px 24px rgba(15,23,42,.06);
+    --shadow-soft:0 6px 18px rgba(15,23,42,.05);
   }
-  *{box-sizing:border-box}
+
   html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Inter",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
   a{color:inherit;text-decoration:none}
   .container{max-width:1200px;margin:0 auto;padding:0 20px}
 
-  /* Header sticky + blur */
+  /* header blur */
   .headbar{
-    position:sticky; top:0; z-index:50; backdrop-filter:saturate(140%) blur(12px);
-    background:linear-gradient(180deg, rgba(255,255,255,.75), rgba(255,255,255,.35));
+    position:sticky;top:0;z-index:50;backdrop-filter:saturate(140%) blur(12px);
+    background:linear-gradient(180deg,rgba(255,255,255,.75),rgba(255,255,255,.35));
     border-bottom:1px solid rgba(15,23,42,.06);
   }
-  .logo{
-    display:flex;align-items:center;gap:.75rem;font-weight:800;font-size:1.05rem;letter-spacing:.2px;
-  }
-  .logo-mark{
-    width:34px;height:34px;border-radius:10px;display:inline-block;box-shadow:var(--shadow-soft);
+  .logo{display:flex;align-items:center;gap:.75rem;font-weight:800;font-size:1.05rem;letter-spacing:.2px;}
+  .logo-mark{width:34px;height:34px;border-radius:10px;display:inline-block;box-shadow:var(--shadow-soft);
     background:radial-gradient(120% 120% at 0% 0%, var(--brand-end) 0%, var(--brand-start) 60%, #2563eb 100%);
   }
 
-  /* NAV en deux groupes (gauche = sections, droite = auth) */
-  .topnav{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
-  .nav-group{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap}
-  .pill{
-    display:inline-flex;align-items:center;gap:.5rem;padding:.55rem .9rem;border-radius:999px;
-    background:rgba(99,102,241,.06);border:1px solid rgba(15,23,42,.06);font-weight:700;
-    transition:.2s; box-shadow:0 1px 0 rgba(255,255,255,.4) inset;
+  .pill{display:inline-flex;align-items:center;gap:.5rem;padding:.55rem .9rem;border-radius:999px;
+    background:rgba(15,23,42,.04);border:1px solid rgba(15,23,42,.08);font-weight:700;transition:.2s;}
+  .pill.active{background:linear-gradient(90deg,var(--brand-start),var(--brand-end));color:#fff;border:0}
+
+  .card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px;
+    border:1px solid rgba(15,23,42,.08);}
+  h1{font-size:2.05rem;letter-spacing:-.01em;margin:0 0 .5rem}
+  p.lead{color:var(--muted);margin:.25rem 0 1.2rem}
+
+  .btn{appearance:none;border:0;cursor:pointer;font-weight:700;border-radius:12px;
+    padding:.9rem 1.2rem;box-shadow:var(--shadow-soft);}
+  .btn.primary{background:linear-gradient(90deg,var(--brand-start),var(--brand-end));color:#0b1f2f}
+  .btn.dark{background:#0f172a;color:#fff}
+
+  /* watermark logo en fond */
+  html,body{height:100%}
+  body::before{
+    content:"";position:fixed;inset:0;background:url('/static/logo-sf.png') no-repeat center 200px / min(1200px,78vmin);
+    opacity:.035;pointer-events:none;z-index:0;
   }
-  .pill:hover{transform:translateY(-1px);box-shadow:var(--shadow-soft)}
-  .pill.active{background:linear-gradient(90deg, var(--brand-start), var(--brand-end));color:#fff;border-color:transparent}
-  .pill-accent{background:#0b1020;color:#fff}
-
-  .spacer{height:18px}
-
-  /* Layouts / cards / hero */
-  .grid{display:grid;gap:24px}
-  .card{
-    background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow); padding:28px;
-    border:1px solid rgba(15,23,42,.06);
-  }
-  h1{font-size:2.35rem; line-height:1.15; margin:0 0 .5rem; letter-spacing:-.02em}
-  p.lead{color:var(--muted); margin:.25rem 0 1.2rem}
-
-  /* Hero en 2 colonnes (responsive) */
-  .hero{
-    display:grid;
-    grid-template-columns:1.1fr .9fr;
-    gap:24px;
-    align-items:stretch;
-    padding:32px 0;
-  }
-  @media (max-width: 900px){
-    .hero{ grid-template-columns:1fr; }
-  }
-
-  /* Buttons */
-  .btn{
-    appearance:none; border:0; cursor:pointer; font-weight:800; border-radius:14px;
-    padding:.9rem 1.2rem; box-shadow:var(--shadow-soft); transition:.15s;
-  }
-  .btn:focus{outline:3px solid var(--ring); outline-offset:2px}
-  .btn.primary{
-    color:#083344; background:linear-gradient(90deg, var(--brand-start), var(--brand-end));
-  }
-  .btn.dark{ background:#0b1020; color:#fff }
-/* === Filigrane géant en fond (logo) === */
-html, body { height: 100%; }
-body { position: relative; }
-
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  background-image: url('/static/logo-sf.png');
-  background-repeat: no-repeat;
-  background-position: center 140px;   /* légèrement plus haut */
-  background-size: 120vmin;            /* taille identique */
-  opacity: 0.05;                       /* même visibilité */
-  pointer-events: none;
-  z-index: 0;
-}
-
-/* le contenu passe au-dessus du filigrane */
-header, main, footer { position: relative; z-index: 1; }
-
-/* ==== SOFT THEME – palette discrète & ombres légères =================== */
-:root{
-  /* Palette désaturée (bleu-gris) */
-  --bg:#f6f8fb;
-  --ink:#0f172a;
-  --muted:#6b7280;
-  --card:#ffffff;
-  --surface:#f2f5f9;
-
-  /* Accent doux */
-  --brand-start:#4f81c7;   /* bleu désaturé */
-  --brand-end:#7fb5d6;     /* bleu clair */
-  --ring:rgba(79,129,199,.25);
-
-  /* Rondeurs & ombres */
-  --radius:14px;
-  --shadow:0 8px 24px rgba(15,23,42,.06);
-  --shadow-soft:0 6px 18px rgba(15,23,42,.05);
-}
-
-/* Typo & titres un peu plus sages */
-h1{ font-size:2.05rem; letter-spacing:-.01em; }
-h2{ font-size:1.35rem; }
-.lead{ color:var(--muted); }
-
-/* Cartes */
-.card{
-  background:var(--card);
-  border:1px solid rgba(15,23,42,.08);
-  border-radius:var(--radius);
-  box-shadow:var(--shadow);
-  padding:24px;
-}
-
-/* Pills (onglets/badges) plus neutres */
-.pill{
-  background:rgba(15,23,42,.04);
-  border:1px solid rgba(15,23,42,.08);
-  color:#0f172a;
-}
-.pill:hover{ transform:none; box-shadow:var(--shadow-soft); }
-.pill.active{
-  background:linear-gradient(90deg, var(--brand-start), var(--brand-end));
-  color:#0e2433;
-  border-color:transparent;
-}
-
-/* Boutons */
-.btn{
-  border-radius:12px;
-  font-weight:700;
-  box-shadow:var(--shadow-soft);
-}
-.btn.primary{
-  /* dégradé plus doux, texte sombre (meilleure lisibilité) */
-  background:linear-gradient(90deg, var(--brand-start), var(--brand-end));
-  color:#0b1f2f;
-}
-.btn.primary:hover{ filter:saturate(1.02) brightness(.98); }
-.btn.dark{ background:#0f172a; color:#fff; }
-
-/* Nav (si affichée ailleurs) */
-.topnav .pill{ background:rgba(15,23,42,.05); }
-
-/* Filigrane logo plus subtil et plus bas */
-body::before{
-  opacity:.035;
-  background-position:center 200px;
-  background-size:min(1200px, 78vmin);
-}
-
-/* Petits espacements uniformes entre sections de la home */
-.container + .container { margin-top:14px; }
-
+  header,main,footer{position:relative;z-index:1}
 </style>
 """
 
