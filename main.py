@@ -682,9 +682,8 @@ async def home(request: Request, user: Optional[User] = Depends(current_user)):
     </div>
   </div>
 
-  <!-- Mini “aperçu dashboard” -->
   <div class="card" style="display:grid;grid-template-rows:auto 1fr;gap:14px">
-    <div style="font-weight:700">Aperçu du cockpit</div>
+    <div style="font-weight:700">Déjà un compte ?</div>
     <div style="display:grid;grid-template-columns:1.3fr .7fr;gap:12px">
       <div style="background:var(--surface);border:1px solid rgba(15,23,42,.06);border-radius:12px;padding:12px">
         <div style="height:120px;border-radius:10px;background:linear-gradient(180deg,#e2f3ff,#f7fbff)"></div>
@@ -703,6 +702,9 @@ async def home(request: Request, user: Optional[User] = Depends(current_user)):
           <div style="font-weight:800;font-size:1.6rem">82%</div>
         </div>
       </div>
+    </div>
+    <div style="margin-top:10px">
+      <a href="/login" class="btn" style="background:#0b1020;color:#fff">Se connecter</a>
     </div>
   </div>
 </section>
@@ -759,7 +761,7 @@ async def home(request: Request, user: Optional[User] = Depends(current_user)):
   </div>
 </section>
 
-<!-- FAQ (CSS only : details/summary) -->
+<!-- FAQ -->
 <section class="container" style="margin-top:14px">
   <div class="card">
     <h3 class="text-xl font-semibold">FAQ</h3>
@@ -800,51 +802,6 @@ async def home(request: Request, user: Optional[User] = Depends(current_user)):
   </div>
 </footer>
 """
-    
-<div class="hero" style="display:grid;grid-template-columns:1.1fr .9fr;gap:28px;align-items:stretch;padding:36px 0">
-  
-  <!-- Bloc gauche -->
-  <div style="background:#fff;border-radius:18px;padding:28px;
-              box-shadow:0 10px 25px rgba(2,6,23,.06);
-              border:1px solid rgba(15,23,42,.06);display:flex;flex-direction:column;">
-    <h1 style="font-size:2.25rem;line-height:1.15;margin:0 0 .5rem;letter-spacing:-.02em;color:#0f172a">
-      Centralisez vos réservations.
-    </h1>
-    <p style="margin:.25rem 0 1.25rem;color:#475569;font-size:1.05rem">
-      Import iCal, calendrier consolidé, et planning ménage.
-    </p>
-    <div style="margin-top:auto">
-      <a href="/signup"
-         style="text-decoration:none;display:inline-flex;align-items:center;gap:.5rem;
-                padding:.9rem 1.2rem;border-radius:14px;font-weight:800;
-                background:linear-gradient(90deg,#0ea5e9,#22d3ee);color:#083344;
-                box-shadow:0 8px 24px rgba(14,165,233,.35)">
-        Créer un compte
-      </a>
-    </div>
-  </div>
-
-  <!-- Bloc droit -->
-  <div style="background:#fff;border-radius:18px;padding:28px;
-              box-shadow:0 10px 25px rgba(2,6,23,.06);
-              border:1px solid rgba(15,23,42,.06);display:flex;flex-direction:column;justify-content:space-between">
-    <div style="font-size:1.2rem;font-weight:600;color:#0f172a;margin-bottom:1rem">
-      Déjà un compte ?
-    </div>
-    <div style="margin-top:auto">
-      <a href="/login"
-         style="text-decoration:none;display:inline-flex;align-items:center;gap:.5rem;
-                padding:.9rem 1.2rem;border-radius:14px;font-weight:800;
-                background:#0b1020;color:#fff;box-shadow:0 6px 18px rgba(2,6,23,.15)">
-        Se connecter
-      </a>
-    </div>
-  </div>
-</div>
-
-</section>
-"""
-    print(">>>> HOME EXECUTED <<<<")
     return page(content, APP_TITLE, user=user, active="", show_private_nav=False)
 
 # --- Signup / Login / Logout --------------------------------
